@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /en/
+
+# Block any accidental dev/build artifacts
+Disallow: /node_modules/
+Disallow: /.git/
+
+# Sitemap location
+Sitemap: https://controlm.vbt.com.tr/sitemap.xml
