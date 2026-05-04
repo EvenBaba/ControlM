@@ -1,0 +1,2026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control-M — Enterprise Workflow Orchestration</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Syne', 'sans-serif'], /* font-display */
+            body: ['DM Sans', 'sans-serif'], /* font-body */
+          },
+          colors: {
+            night: '#070b14',
+            'blue-vivid': '#2563EB',
+            'cyan-vivid': '#06B6D4',
+          },
+          keyframes: {
+            'fade-up': {
+              '0%': { opacity: '0', transform: 'translateY(32px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            'fade-in': {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            pulse2: {
+              '0%, 100%': { opacity: '0.3', transform: 'scale(1)' },
+              '50%': { opacity: '0.6', transform: 'scale(1.08)' },
+            },
+            orbit: {
+              '0%': { transform: 'rotate(0deg) translateX(120px) rotate(0deg)' },
+              '100%': { transform: 'rotate(360deg) translateX(120px) rotate(-360deg)' },
+            },
+          },
+          animation: {
+            'fade-up': 'fade-up 0.7s ease forwards',
+            'fade-in': 'fade-in 0.6s ease forwards',
+            pulse2: 'pulse2 4s ease-in-out infinite',
+            orbit: 'orbit 12s linear infinite',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #070b14;
+      color: #e2e8f0;
+      overflow-x: hidden;
+    }
+
+    /* ── Mesh background ── */
+    .mesh-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(37,99,235,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(6,182,212,0.12) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 60% 30%, rgba(99,102,241,0.08) 0%, transparent 50%);
+    }
+
+    /* ── Grid overlay ── */
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%);
+    }
+
+    /* ── Nav link active state ── */
+    .nav-link {
+      position: relative;
+      transition: color 0.2s;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #2563EB, #06B6D4);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    .nav-link:hover::after,
+    .nav-link.active::after { width: 100%; }
+    .nav-link:hover { color: #fff; }
+    .nav-link.active { color: #fff; }
+
+    /* ── Gradient text ── */
+    .gradient-text {
+      background: linear-gradient(135deg, #60a5fa 0%, #06B6D4 50%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Glow button ── */
+    .btn-glow {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #2563EB, #06B6D4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-glow::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #3b82f6, #22d3ee);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .btn-glow:hover { transform: translateY(-2px); box-shadow: 0 0 32px rgba(37,99,235,0.55); }
+    .btn-glow:hover::before { opacity: 1; }
+    .btn-glow span { position: relative; z-index: 1; }
+
+    /* ── Cards ── */
+    .card-glass {
+      background: rgba(15,23,42,0.6);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.07);
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    }
+    .card-glass:hover {
+      border-color: rgba(37,99,235,0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 48px rgba(37,99,235,0.15);
+    }
+
+    /* ── Reveal-on-scroll ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ── Animated orbit ring (hero decoration) ── */
+    .orbit-ring {
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      border: 1px dashed rgba(37,99,235,0.25);
+      animation: spin-slow 20s linear infinite;
+    }
+    .orbit-ring-2 {
+      width: 480px;
+      height: 480px;
+      border-color: rgba(6,182,212,0.15);
+      animation-duration: 30s;
+      animation-direction: reverse;
+    }
+    @keyframes spin-slow { to { transform: rotate(360deg); } }
+
+    .orbit-dot {
+      position: absolute;
+      top: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #2563EB;
+      box-shadow: 0 0 12px 3px rgba(37,99,235,0.6);
+    }
+
+    /* ── Nav blur ── */
+    .nav-blur {
+      background: rgba(7,11,20,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* ── Mobile menu ── */
+    #mobile-menu {
+      display: none;
+    }
+    #mobile-menu.open {
+      display: flex;
+    }
+
+    /* ── Section badge ── */
+    .section-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: 9999px;
+      background: rgba(37,99,235,0.12);
+      border: 1px solid rgba(37,99,235,0.25);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #93c5fd;
+    }
+
+    /* ── Feature icon wrapper ── */
+    .feat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      background: rgba(37,99,235,0.1);
+      border: 1px solid rgba(37,99,235,0.2);
+    }
+
+    /* ── Benefit row ── */
+    .benefit-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      padding: 1.75rem 2rem;
+      border-radius: 1rem;
+      background: rgba(15,23,42,0.5);
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .benefit-row:hover {
+      border-color: rgba(16,185,129,0.35);
+      transform: translateX(6px);
+    }
+
+    .check-icon {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.25);
+      color: #34d399;
+      font-size: 1.1rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      background: rgba(5,8,14,0.95);
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #070b14; }
+    ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 3px; }
+
+    /* ── SPA page system ── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── Page transition ── */
+    @keyframes page-in {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .page.active { animation: page-in 0.45s ease forwards; }
+
+    /* ── AI page styles ── */
+    .ai-section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+    }
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .compare-table th {
+      background: rgba(37,99,235,0.15);
+      color: #93c5fd;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 12px 16px;
+      text-align: left;
+    }
+    .compare-table td {
+      padding: 12px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .compare-table tr:hover td { background: rgba(37,99,235,0.05); }
+    .compare-table th:first-child,
+    .compare-table td:first-child { border-radius: 0; font-weight: 500; color: #e2e8f0; }
+
+    /* ── FAQ accordion ── */
+    .faq-btn {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 1.25rem 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #e2e8f0;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      gap: 1rem;
+    }
+    .faq-btn:hover { color: #60a5fa; }
+    .faq-icon {
+      flex-shrink: 0;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 1px solid rgba(37,99,235,0.4);
+      display: flex; align-items: center; justify-content: center;
+      color: #60a5fa;
+      font-size: 1rem;
+      transition: transform 0.3s, background 0.3s;
+    }
+    .faq-btn.open .faq-icon {
+      transform: rotate(45deg);
+      background: rgba(37,99,235,0.2);
+    }
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, padding 0.3s;
+      font-family: 'DM Sans', sans-serif;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+    .faq-answer.open {
+      max-height: 200px;
+      padding-bottom: 1.25rem;
+    }
+
+    /* ── Capability cards ── */
+    .cap-card {
+      background: rgba(15,23,42,0.6);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 1rem;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      cursor: default;
+    }
+    .cap-card:hover {
+      border-color: rgba(37,99,235,0.35);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(37,99,235,0.12);
+    }
+    .cap-card.highlighted {
+      background: rgba(99,102,241,0.18);
+      border-color: rgba(99,102,241,0.4);
+      cursor: pointer;
+    }
+    .cap-card.highlighted:hover {
+      border-color: rgba(99,102,241,0.7);
+      box-shadow: 0 16px 40px rgba(99,102,241,0.2);
+    }
+    .cap-learn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-top: auto;
+      padding-top: 0.5rem;
+      transition: gap 0.2s;
+    }
+    .cap-card:not(.highlighted) .cap-learn { color: #60a5fa; }
+    .cap-card.highlighted .cap-learn { color: #c4b5fd; }
+    .cap-card:hover .cap-learn { gap: 10px; }
+    .ai-pill-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .ai-pill {
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.78rem;
+      color: #94a3b8;
+      border: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer;
+      transition: all 0.2s;
+      background: transparent;
+    }
+    .ai-pill:hover { color: #fff; border-color: rgba(37,99,235,0.5); background: rgba(37,99,235,0.1); }
+
+    /* ── Compare table (shared) ── */
+    .compare-table { width: 100%; border-collapse: collapse; }
+    .compare-table th { background: rgba(37,99,235,0.15); color: #93c5fd; font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 12px 16px; text-align: left; }
+    .compare-table td { padding: 11px 16px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: #cbd5e1; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:hover td { background: rgba(37,99,235,0.05); }
+  </style>
+</head>
+
+<body class="relative">
+  <!-- Background layers -->
+  <div class="mesh-bg"></div>
+  <div class="grid-overlay"></div>
+
+  <!-- ═══════════════ NAV ═══════════════ -->
+  <nav id="navbar" class="fixed top-0 w-full z-50 nav-blur transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <!-- Logo -->
+      <a href="https://vbt.com.tr" target="_blank" class="flex items-center gap-2.5">
+        <img src="logo.svg" alt="Control-M Logo" class="h-9 w-auto" />
+      </a>
+
+      <!-- Desktop links -->
+      <div class="hidden md:flex items-center gap-8">
+        <div id="nav-main-links" class="flex items-center gap-8">
+          <a href="#home" class="nav-link active text-slate-300 font-body text-sm" data-section="home">Home</a>
+          <a href="#about" class="nav-link text-slate-300 font-body text-sm" data-section="about">About</a>
+          <a href="#features" class="nav-link text-slate-300 font-body text-sm" data-section="features">Features</a>
+          <a href="#capabilities" class="nav-link text-slate-300 font-body text-sm" data-section="capabilities">Capabilities</a>
+          <a href="#getting-started" class="nav-link text-slate-300 font-body text-sm" data-section="getting-started">Get Started</a>
+          <a href="#benefits" class="nav-link text-slate-300 font-body text-sm" data-section="benefits">Benefits</a>
+          <a href="#contact" class="nav-link text-slate-300 font-body text-sm" data-section="contact">Contact</a>
+        </div>
+
+        <div id="nav-ai-links" class="hidden flex items-center gap-6">
+          <button onclick="showPage('main')" class="text-blue-400 font-body text-xs font-bold border border-blue-400/30 px-3 py-1 rounded-full hover:bg-blue-400/10 transition-all">← BACK</button>
+          <a href="#ai-definition" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">What is it?</a>
+          <a href="#ai-vs-agentic" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">vs. Agentic</a>
+          <a href="#ai-how-helps" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">How it Helps</a>
+          <a href="#ai-use-cases" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">Use Cases</a>
+          <a href="#ai-foundations" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">Foundations</a>
+          <a href="#ai-different" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">Why Control-M</a>
+          <a href="#ai-faq" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">FAQs</a>
+        </div>
+
+        <div id="nav-data-links" class="hidden flex items-center gap-8">
+          <button onclick="showPage('main')" class="text-cyan-400 font-body text-xs font-bold border border-cyan-400/30 px-3 py-1 rounded-full hover:bg-cyan-400/10 transition-all ml-2">
+            ← BACK
+          </button>
+          <a href="#data-what" class="nav-link text-slate-300 font-body text-xs tracking-wider">What It Does</a>
+          <a href="#data-integrations" class="nav-link text-slate-300 font-body text-xs tracking-wider">Integrations</a>
+          <a href="#data-usecases" class="nav-link text-slate-300 font-body text-xs tracking-wider">Use Cases</a>
+          <a href="#data-how" class="nav-link text-slate-300 font-body text-xs tracking-wider">How It Works</a>
+        </div>
+
+        <div id="nav-jac-links" class="hidden flex items-center gap-6">
+          <button onclick="showPage('main')" class="text-green-400 font-body text-xs font-bold border border-green-400/30 px-3 py-1 rounded-full hover:bg-green-400/10 transition-all ml-2">
+            ← BACK
+          </button>
+          <a href="#jac-what" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">What It Is</a>
+          <a href="#jac-how" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">How It Works</a>
+          <a href="#jac-api" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">Automation API</a>
+          <a href="#jac-tutorials" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">Tutorials</a>
+          <a href="#jac-tools" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">Tools</a>
+        </div>
+
+        <div id="nav-sap-links" class="hidden flex items-center gap-6">
+          <button onclick="showPage('main')" class="text-orange-400 font-body text-xs font-bold border border-orange-400/30 px-3 py-1 rounded-full hover:bg-orange-400/10 transition-all ml-2">
+            ← BACK
+          </button>
+          <a href="#sap-overview" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">Overview</a>
+          <a href="#sap-platforms" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">SAP Platforms</a>
+          <a href="#sap-usecases" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">Use Cases</a>
+          <a href="#sap-why" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">Why Control-M</a>
+          <a href="#sap-migration" class="nav-link text-slate-300 font-body text-[11px] tracking-wider">Migration</a>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <a href="#contact" class="hidden md:inline-flex btn-glow text-white text-sm font-body font-medium px-5 py-2.5 rounded-lg">
+        <span>Get Started</span>
+      </a>
+
+      <!-- Hamburger -->
+      <button id="hamburger" class="md:hidden text-slate-300 hover:text-white transition-colors" aria-label="Menu">
+        <svg id="ham-open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <svg id="ham-close" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="md:hidden flex-col px-6 pb-5 gap-3 border-t border-slate-800/60">
+      <div id="mobile-nav-main">
+        <a href="#home"            class="block text-slate-300 hover:text-white py-2 font-body text-sm transition-colors">Home</a>
+        <a href="#about"           class="block text-slate-300 hover:text-white py-2 font-body text-sm transition-colors">About</a>
+        <a href="#features"        class="block text-slate-300 hover:text-white py-2 font-body text-sm transition-colors">Core Concepts</a>
+        <a href="#capabilities"    class="block text-slate-300 hover:text-white py-2 font-body text-sm transition-colors">Capabilities</a>
+        <a href="#getting-started" class="block text-slate-300 hover:text-white py-2 font-body text-sm transition-colors">Get Started</a>
+        <a href="#benefits"        class="block text-slate-300 hover:text-white py-2 font-body text-sm transition-colors">Benefits</a>
+        <a href="#contact"         class="block text-slate-300 hover:text-white py-2 font-body text-sm transition-colors">Contact</a>
+      </div>
+      <div id="mobile-nav-ai" style="display:none;">
+        <button onclick="navScrollAI('ai-definition'); closeMobileMenu();" class="block text-left text-slate-300 hover:text-white py-2 font-body text-sm transition-colors w-full">What is it?</button>
+        <button onclick="navScrollAI('ai-vs-agentic'); closeMobileMenu();" class="block text-left text-slate-300 hover:text-white py-2 font-body text-sm transition-colors w-full">vs. Agentic</button>
+        <button onclick="navScrollAI('ai-how-helps');  closeMobileMenu();" class="block text-left text-slate-300 hover:text-white py-2 font-body text-sm transition-colors w-full">How it Helps</button>
+        <button onclick="navScrollAI('ai-use-cases');  closeMobileMenu();" class="block text-left text-slate-300 hover:text-white py-2 font-body text-sm transition-colors w-full">Use Cases</button>
+        <button onclick="navScrollAI('ai-foundations');closeMobileMenu();" class="block text-left text-slate-300 hover:text-white py-2 font-body text-sm transition-colors w-full">Foundations</button>
+        <button onclick="navScrollAI('ai-different');  closeMobileMenu();" class="block text-left text-slate-300 hover:text-white py-2 font-body text-sm transition-colors w-full">Why Control-M</button>
+        <button onclick="navScrollAI('ai-faq');        closeMobileMenu();" class="block text-left text-slate-300 hover:text-white py-2 font-body text-sm transition-colors w-full">FAQs</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ========== PAGE: MAIN ========== -->
+  <div id="page-main" class="page active">
+
+  <!-- ========== HERO ========== -->
+  <section id="home" class="relative min-h-screen flex items-center justify-center pt-20 px-6 overflow-hidden">
+    <!-- Decorative rings -->
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none">
+      <div class="orbit-ring"><div class="orbit-dot" style="background:#2563EB;"></div></div>
+      <div class="orbit-ring orbit-ring-2" style="top:-80px;left:-80px;position:absolute;">
+        <div class="orbit-dot" style="background:#06B6D4;box-shadow:0 0 12px 3px rgba(6,182,212,0.6);"></div>
+      </div>
+    </div>
+
+    <div class="relative z-10 max-w-4xl mx-auto text-center">
+      <!-- Badge -->
+      <div class="reveal mb-7 inline-block">
+        <span class="section-badge">⚡ Enterprise Workload Automation</span>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="font-display font-bold text-5xl md:text-7xl text-white leading-[1.25] mb-6">
+        Welcome to<br/><span class="gradient-text">Control-M</span>
+      </h1>
+
+      <!-- Sub -->
+      <p class="reveal reveal-delay-2 font-body text-lg md:text-xl text-slate-400 mb-10 leading-relaxed max-w-2xl mx-auto">
+        The industry-leading workload automation platform that orchestrates and manages complex workflows across your entire enterprise — from mainframe to cloud.
+      </p>
+
+      <!-- CTA Row -->
+      <div class="reveal reveal-delay-3 flex flex-wrap items-center justify-center gap-4 mb-16">
+        <a href="#about" class="btn-glow px-8 py-3.5 rounded-xl text-white font-body font-medium text-base cursor-pointer">
+          <span>Learn More</span>
+        </a>
+        <a href="#contact" class="px-8 py-3.5 rounded-xl font-body font-medium text-base text-slate-300 border border-slate-700 hover:border-slate-500 hover:text-white transition-all">
+          Contact Sales
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Scroll hint -->
+    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
+      <span class="font-body text-xs text-slate-500 tracking-widest uppercase">Scroll</span>
+      <div class="w-px h-10 bg-gradient-to-b from-slate-500 to-transparent"></div>
+    </div>
+  </section>
+
+  <!-- ========== ABOUT ========== -->
+  <section id="about" class="relative px-6 py-24">
+    <div class="relative z-10 max-w-5xl mx-auto w-full">
+      <div class="text-center mb-14">
+        <span class="section-badge reveal mb-4">About</span>
+        <h2 class="reveal reveal-delay-1 font-display font-bold text-white mt-4" style="font-size:clamp(2rem,4.5vw,3rem);line-height:1.15;letter-spacing:-0.01em;">What is <span class="gradient-text">Control-M?</span></h2>
+        <p class="reveal reveal-delay-2 font-body text-slate-400 mt-4 max-w-2xl mx-auto leading-relaxed">Control-M is BMC Software's enterprise workload automation platform — a single point of control for scheduling, running, and monitoring every critical business process across your entire IT estate.</p>
+      </div>
+
+      <!-- Core definition card -->
+      <div class="card-glass rounded-3xl p-8 md:p-12 mb-8 reveal">
+        <div class="grid md:grid-cols-2 gap-10 items-center">
+          <div>
+            <h3 class="font-display font-bold text-2xl text-white mb-4">The Central Idea</h3>
+            <p class="font-body text-slate-400 leading-relaxed mb-4">Every organization depends on processes running reliably and on time — salaries computed and distributed, databases backed up and restarted, reports generated, data pipelines fed. Control-M automates these processes, called <strong class="text-slate-200">jobs</strong>, in an organized, dependency-aware way.</p>
+            <p class="font-body text-slate-400 leading-relaxed">A <strong class="text-slate-200">job</strong> is an execution unit — a script, command, or part of an external application. Jobs run in sequence forming a <strong class="text-slate-200">workflow</strong>. Control-M manages those workflows across every platform, application, and infrastructure your organization uses.</p>
+          </div>
+          <div class="space-y-4">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm" style="background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.3);">1</div>
+              <div><p class="font-body text-slate-300 text-sm font-medium">Define Jobs</p><p class="font-body text-slate-500 text-xs">Scripts, commands, or app-level tasks with scheduling rules and dependencies</p></div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm" style="background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.3);">2</div>
+              <div><p class="font-body text-slate-300 text-sm font-medium">Group into Workflows</p><p class="font-body text-slate-500 text-xs">Organize jobs into folders and SMART Folders — dependencies flow automatically</p></div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);">3</div>
+              <div><p class="font-body text-slate-300 text-sm font-medium">Monitor & Act</p><p class="font-body text-slate-500 text-xs">Real-time monitoring, SLA tracking, alerts, and automated recovery — all in one view</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4-card grid -->
+      <div class="grid md:grid-cols-2 gap-5">
+        <div class="card-glass rounded-2xl p-7 reveal">
+          <div class="feat-icon">⚡</div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">Workload Automation</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed">Automates scheduling and processing of business workflows across every platform and application from a single point of control — replacing manual, error-prone job management at enterprise scale.</p>
+        </div>
+        <div class="card-glass rounded-2xl p-7 reveal reveal-delay-1">
+          <div class="feat-icon" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.2);">🛡️</div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">Enterprise-Grade Reliability</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed">Used by 80% of the Forbes Global 100. Delivers 99.99% availability with automatic failure recovery, role-based security, full audit trails, and SLA compliance enforcement.</p>
+        </div>
+        <div class="card-glass rounded-2xl p-7 reveal reveal-delay-2">
+          <div class="feat-icon" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.2);">☁️</div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">Cloud & Hybrid Ready</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed">Manages workloads across AWS, Azure, Google Cloud, and on-premises mainframes from a unified control plane. Hybrid pipelines can span a mainframe job to a Spark process on AWS EMR to a Snowflake warehouse — seamlessly.</p>
+        </div>
+        <div class="card-glass rounded-2xl p-7 reveal reveal-delay-3">
+          <div class="feat-icon" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.2);">🤖</div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">AI-Powered Automation</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed">The 2026 AI Workflow Creator lets you build workflows by describing them in plain language. Predictive analytics flag SLA risks before they impact business. AI agents can be coordinated within automated workflows.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FEATURES / KEY CONCEPTS ========== -->
+  <section id="features" class="relative px-6 py-24">
+    <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(37,99,235,0.06) 0%,transparent 70%);"></div>
+    <div class="relative z-10 max-w-6xl mx-auto w-full">
+
+      <!-- Core Concepts -->
+      <div class="text-center mb-14">
+        <span class="section-badge reveal mb-4">Core Concepts</span>
+        <h2 class="reveal reveal-delay-1 font-display font-bold text-white mt-4" style="font-size:clamp(2rem,4.5vw,3rem);line-height:1.15;letter-spacing:-0.01em;">How Control-M <span class="gradient-text">Works</span></h2>
+        <p class="reveal reveal-delay-2 font-body text-slate-400 mt-4 max-w-2xl mx-auto text-sm leading-relaxed">Understanding the building blocks — from individual jobs to enterprise-wide orchestration.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-5 mb-20">
+        <div class="card-glass rounded-2xl p-7 reveal">
+          <div class="feat-icon">🔧</div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">Jobs</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed">The atomic unit. A job is a script, OS command, or part of an external application (Hadoop, SAP, Snowflake). Each job carries its own scheduling criteria, dependencies, and post-processing actions — what to do after it succeeds or fails.</p>
+        </div>
+        <div class="card-glass rounded-2xl p-7 reveal reveal-delay-1">
+          <div class="feat-icon" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.2);">📁</div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">Folders & SMART Folders</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed">Jobs with related schedules are grouped into <strong class="text-slate-300">folders</strong>. A <strong class="text-slate-300">SMART Folder</strong> passes its scheduling, prerequisites, and actions down to all child jobs — so you define rules once at the folder level instead of per job, dramatically reducing configuration effort.</p>
+        </div>
+        <div class="card-glass rounded-2xl p-7 reveal reveal-delay-2">
+          <div class="feat-icon" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.2);">🔀</div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">Flows & Dependencies</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed">A <strong class="text-slate-300">Flow</strong> defines order dependency between jobs — Job B only starts after Job A ends successfully. One job can belong to multiple flows: Job 3 executes if either Job 1 or Job 2 completes. This creates complex, conditional pipelines without custom scripting.</p>
+        </div>
+        <div class="card-glass rounded-2xl p-7 reveal">
+          <div class="feat-icon" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.2);">📅</div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">Calendars & Scheduling</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed"><strong class="text-slate-300">Rule-Based Calendars</strong> define when jobs run — weekdays, month-end, specific dates. <strong class="text-slate-300">Confirmation Calendars</strong> automatically handle exceptions like public holidays. If a scheduled day falls on a holiday, Control-M applies your policy (skip, run next day, run before) without manual intervention.</p>
+        </div>
+        <div class="card-glass rounded-2xl p-7 reveal reveal-delay-1">
+          <div class="feat-icon" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.2);">🖥️</div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">Agents</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed"><strong class="text-slate-300">Control-M Agents</strong> are installed on the hosts where your jobs actually run. The Agent receives job instructions from the Server, executes the job, monitors it, and reports status back. Agentless execution via Remote Hosts is also supported for environments where installing software isn't possible.</p>
+        </div>
+        <div class="card-glass rounded-2xl p-7 reveal reveal-delay-2">
+          <div class="feat-icon" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);">🔐</div>
+          <h3 class="font-display font-bold text-lg text-white mb-2">Resources & Lock Control</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed"><strong class="text-slate-300">Lock Resources</strong> prevent jobs from accessing the same file, host, or device simultaneously. <strong class="text-slate-300">Resource Pools</strong> cap total CPU or memory usage so no workflow can starve others. This prevents system overload even at peak volume of 100,000 executions per server per day.</p>
+        </div>
+      </div>
+
+      <!-- Architecture -->
+      <div class="text-center mb-10">
+        <span class="section-badge reveal mb-4">Architecture</span>
+        <h2 class="reveal reveal-delay-1 font-display font-bold text-white mt-4" style="font-size:clamp(1.8rem,3.5vw,2.5rem);line-height:1.2;">Three-Layer <span class="gradient-text">Architecture</span></h2>
+        <p class="reveal reveal-delay-2 font-body text-slate-400 mt-3 max-w-xl mx-auto text-sm">Control-M uses a distributed microservices architecture built on Apache Kafka and Zookeeper for high-throughput, fault-tolerant orchestration.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-5 mb-8">
+        <div class="card-glass rounded-2xl p-7 reveal relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#2563EB,#06B6D4);"></div>
+          <div class="text-3xl mb-4">🏛️</div>
+          <h3 class="font-display font-bold text-white text-lg mb-2">Enterprise Manager (EM)</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed">The central console. Hosts all client tools — the Planning UI, Configuration Manager, Self-Service portal, Workload Change Manager, and the Automation API for DevOps. The GUI Server handles client communication with load-balancing. A Global Conditions Server distributes events for cross-server dependencies.</p>
+        </div>
+        <div class="card-glass rounded-2xl p-7 reveal reveal-delay-1 relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#7c3aed,#06B6D4);"></div>
+          <div class="text-3xl mb-4">⚙️</div>
+          <h3 class="font-display font-bold text-white text-lg mb-2">Control-M Server</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed">The scheduling engine. Manages job scheduling, workflow coordination, and workload balancing. Maintains a local Active Jobs Database. Server-side microservices include an API Gateway, Job Info Service, Job Order Service, and Scheduling Service — all synchronized via Kafka messaging.</p>
+        </div>
+        <div class="card-glass rounded-2xl p-7 reveal reveal-delay-2 relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#059669,#06B6D4);"></div>
+          <div class="text-3xl mb-4">🤖</div>
+          <h3 class="font-display font-bold text-white text-lg mb-2">Agents & Remote Hosts</h3>
+          <p class="font-body text-slate-400 text-sm leading-relaxed">Installed on every target machine where jobs run. Receives job definitions from the Server, executes them, and reports status back. Supports counters, multiple notification types, and plug-ins for specific applications. Remote Hosts enable agentless execution where direct installation isn't possible.</p>
+        </div>
+      </div>
+
+      <!-- Monitoring strip -->
+      <div class="card-glass rounded-2xl p-8 reveal">
+        <div class="grid md:grid-cols-2 gap-8 items-center">
+          <div>
+            <span class="section-badge mb-4 inline-block" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);color:#fcd34d;">Monitoring & Alerting</span>
+            <h3 class="font-display font-bold text-xl text-white mb-3 mt-2">Real-Time Operational Control</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed mb-4">The Monitoring domain gives you live visibility into every job and workflow. Investigate issues through three tabs: <strong class="text-slate-300">Log</strong> (every status change with timestamps), <strong class="text-slate-300">Output</strong> (job result and exit codes), and <strong class="text-slate-300">Waiting Info</strong> (what events or resources a job is blocked on).</p>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Alerts are classified as Normal, Urgent, or Critical. They can auto-open tickets in Jira, trigger scripts, or push to external monitoring tools like Dynatrace and Datadog via WebSocket streams.</p>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 rounded-xl" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);">
+              <span class="text-green-400 font-display font-bold text-sm w-24 flex-shrink-0">Ended OK</span>
+              <p class="font-body text-slate-400 text-xs">Job completed successfully, post-processing ran</p>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-xl" style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);">
+              <span class="text-blue-400 font-display font-bold text-sm w-24 flex-shrink-0">Executing</span>
+              <p class="font-body text-slate-400 text-xs">Job is actively running on its assigned Agent</p>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-xl" style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);">
+              <span class="text-yellow-400 font-display font-bold text-sm w-24 flex-shrink-0">Waiting</span>
+              <p class="font-body text-slate-400 text-xs">In run queue, awaiting prerequisites or resources</p>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-xl" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);">
+              <span class="text-red-400 font-display font-bold text-sm w-24 flex-shrink-0">Ended Not OK</span>
+              <p class="font-body text-slate-400 text-xs">Job failed — folder stays visible until next New Day cycle</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========== EXTRA CLOSING TAG REMOVED ========== -->
+
+  <!-- ========== CAPABILITIES ========== -->
+  <section id="capabilities" class="relative px-6 py-24">
+    <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(37,99,235,0.05) 0%, transparent 70%);"></div>
+    <div class="relative z-10 max-w-6xl mx-auto w-full">
+      <div class="text-center mb-14">
+        <span class="section-badge reveal mb-4">Capabilities</span>
+        <h2 class="reveal reveal-delay-1 font-display font-bold text-white mt-4" style="font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1.15; letter-spacing: -0.01em;">
+          Explore Control-M's <span class="gradient-text">Capabilities</span>
+        </h2>
+      </div>
+
+      <div class="min-h-[500px] grid md:grid-cols-4 gap-5">
+
+        <!-- 1. AI-Assisted — links to AI page -->
+        <div class="cap-card highlighted reveal" onclick="showPage('ai')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')showPage('ai')" style="flex-direction:column;align-items:center;gap:1.5rem;">
+          <div class="flex-shrink-0 hidden md:block">
+            <span class="inline-flex items-center gap-1.5 text-xs font-body text-purple-300 bg-purple-900/40 border border-purple-700/40 px-2.5 py-1 rounded-full">✦ AI-Powered</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-display font-bold text-white text-lg leading-tight mb-1">AI-Assisted and Intelligent Automation</h3>
+            <p class="font-body text-slate-300 text-sm leading-relaxed">Build workflows with plain-language AI, predict SLA risks, and coordinate AI agents in production.</p>
+          </div>
+          <span class="cap-learn flex-shrink-0">Explore →</span>
+        </div>
+
+        <!-- 2. Data Pipeline — links to data page -->
+        <div class="cap-card highlighted reveal reveal-delay-1" onclick="showPage('data')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')showPage('data')" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.3);flex-direction:column;align-items:center;gap:1.5rem;">
+          <div class="flex-shrink-0 hidden md:block">
+            <span class="inline-flex items-center gap-1.5 text-xs font-body text-cyan-300 bg-cyan-900/30 border border-cyan-700/40 px-2.5 py-1 rounded-full">🧱 Big Data</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-display font-bold text-white text-lg leading-tight mb-1">Data Pipeline Orchestration</h3>
+            <p class="font-body text-slate-300 text-sm leading-relaxed">Orchestrate pipelines from ingestion to analysis across Snowflake, Databricks, Airflow, and more.</p>
+          </div>
+          <span class="cap-learn flex-shrink-0" style="color:#67e8f9;">Explore →</span>
+        </div>
+
+        <!-- 3. Jobs-as-Code — links to jac page -->
+        <div class="cap-card highlighted reveal reveal-delay-2" onclick="showPage('jac')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')showPage('jac')" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);flex-direction:column;align-items:center;gap:1.5rem;">
+          <div class="flex-shrink-0 hidden md:block">
+            <span class="inline-flex items-center gap-1.5 text-xs font-body text-green-300 bg-green-900/30 border border-green-700/40 px-2.5 py-1 rounded-full">⚙️ DevOps</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-display font-bold text-white text-lg leading-tight mb-1">Jobs-as-Code and DevOps Orchestration</h3>
+            <p class="font-body text-slate-300 text-sm leading-relaxed">Define, test, and deploy jobs as code through CI/CD with the Automation API and version control.</p>
+          </div>
+          <span class="cap-learn flex-shrink-0" style="color:#6ee7b7;">Explore →</span>
+        </div>
+
+        <!-- 4. SAP — links to sap page -->
+        <div class="cap-card highlighted reveal reveal-delay-3" onclick="showPage('sap')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')showPage('sap')" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);flex-direction:column;align-items:center;gap:1.5rem;">
+          <div class="flex-shrink-0 hidden md:block">
+            <span class="inline-flex items-center gap-1.5 text-xs font-body text-yellow-300 bg-yellow-900/30 border border-yellow-700/40 px-2.5 py-1 rounded-full">🏭 SAP Certified</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-display font-bold text-white text-lg leading-tight mb-1">SAP Workflow Orchestration</h3>
+            <p class="font-body text-slate-300 text-sm leading-relaxed">RISE with SAP certified. Orchestrate S/4HANA, BTP, ECC, and BW alongside non-SAP systems.</p>
+          </div>
+          <span class="cap-learn flex-shrink-0" style="color:#fcd34d;">Explore →</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== GETTING STARTED ========== -->
+  <section id="getting-started" class="relative px-6 py-24">
+    <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(16,185,129,0.05) 0%,transparent 70%);"></div>
+    <div class="relative z-10 max-w-5xl mx-auto w-full">
+      <div class="text-center mb-14">
+        <span class="section-badge reveal mb-4" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);color:#6ee7b7;">Getting Started</span>
+        <h2 class="reveal reveal-delay-1 font-display font-bold text-white mt-4" style="font-size:clamp(2rem,4.5vw,3rem);line-height:1.15;letter-spacing:-0.01em;">How to Get <span class="gradient-text">Up and Running</span></h2>
+        <p class="reveal reveal-delay-2 font-body text-slate-400 mt-4 max-w-xl mx-auto text-sm leading-relaxed">Whether you're on SaaS or self-hosted, Control-M follows the same setup sequence. SaaS users skip Steps 1–2 entirely — infrastructure is handled by BMC.</p>
+      </div>
+
+      <!-- Steps -->
+      <div class="relative">
+        <!-- Connector line (desktop only) -->
+        <div class="hidden md:block absolute top-10 left-0 right-0 h-px" style="background:linear-gradient(90deg,transparent,rgba(37,99,235,0.3),rgba(6,182,212,0.3),transparent);"></div>
+        <div class="grid md:grid-cols-5 gap-5">
+          <div class="card-glass rounded-2xl p-6 reveal text-center relative">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-4 font-display font-bold text-white relative z-10" style="background:linear-gradient(135deg,#2563EB,#06B6D4);">1</div>
+            <h4 class="font-display font-bold text-white text-sm mb-2">Log In</h4>
+            <p class="font-body text-slate-400 text-xs leading-relaxed">Access Control-M via the web UI. SaaS users get credentials immediately; self-hosted requires server installation first.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-6 reveal reveal-delay-1 text-center relative">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-4 font-display font-bold text-white relative z-10" style="background:linear-gradient(135deg,#2563EB,#06B6D4);">2</div>
+            <h4 class="font-display font-bold text-white text-sm mb-2">Install Agents</h4>
+            <p class="font-body text-slate-400 text-xs leading-relaxed">Deploy Control-M Agents on every host where jobs will run. Agents handle execution and status reporting back to the Server.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-6 reveal reveal-delay-2 text-center relative">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-4 font-display font-bold text-white relative z-10" style="background:linear-gradient(135deg,#2563EB,#06B6D4);">3</div>
+            <h4 class="font-display font-bold text-white text-sm mb-2">Define Connections</h4>
+            <p class="font-body text-slate-400 text-xs leading-relaxed">Configure Connection Profiles for each plug-in (Snowflake, SAP, Hadoop, etc.) so Control-M can authenticate and submit jobs to those systems.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-6 reveal reveal-delay-3 text-center relative">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-4 font-display font-bold text-white relative z-10" style="background:linear-gradient(135deg,#2563EB,#06B6D4);">4</div>
+            <h4 class="font-display font-bold text-white text-sm mb-2">Build Workflows</h4>
+            <p class="font-body text-slate-400 text-xs leading-relaxed">Create a Workspace in the Planning domain. Add a SMART Folder, drag in jobs, define scheduling rules and dependencies, then check in to the database.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-6 reveal reveal-delay-3 text-center relative">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-4 font-display font-bold text-white relative z-10" style="background:linear-gradient(135deg,#2563EB,#06B6D4);">5</div>
+            <h4 class="font-display font-bold text-white text-sm mb-2">Monitor & Iterate</h4>
+            <p class="font-body text-slate-400 text-xs leading-relaxed">Use the Monitoring domain to watch live job statuses, review logs and output, configure alerts, generate reports, and troubleshoot failures.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick reference: job statuses + key terminology -->
+      <div class="mt-12 grid md:grid-cols-2 gap-6">
+        <div class="card-glass rounded-2xl p-7 reveal">
+          <h3 class="font-display font-bold text-white text-lg mb-5">📖 Key Terminology</h3>
+          <div class="space-y-3">
+            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">Job</span><p class="font-body text-slate-400 text-xs leading-relaxed">A single execution unit — script, OS command, or app-level task (Hadoop, SAP, Snowflake plug-in)</p></div>
+            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">SMART Folder</span><p class="font-body text-slate-400 text-xs leading-relaxed">A container whose scheduling, prerequisites, and actions are inherited by all child jobs automatically</p></div>
+            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">Flow</span><p class="font-body text-slate-400 text-xs leading-relaxed">An order-dependency definition: Job B only runs if Job A ends successfully</p></div>
+            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">New Day</span><p class="font-body text-slate-400 text-xs leading-relaxed">Daily reset cycle (default midnight) when completed folders are cleared and next-day jobs are ordered</p></div>
+            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">Run Queue</span><p class="font-body text-slate-400 text-xs leading-relaxed">The set of jobs scheduled to execute today, in Waiting or Executing state</p></div>
+            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">SLA Job</span><p class="font-body text-slate-400 text-xs leading-relaxed">Maps the critical path of a workflow that must complete within a user-defined time window</p></div>
+          </div>
+        </div>
+        <div class="card-glass rounded-2xl p-7 reveal reveal-delay-1">
+          <h3 class="font-display font-bold text-white text-lg mb-5">🔌 Key Integrations</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="text-xs font-body text-slate-400 flex items-center gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.03);">☁️ AWS (S3, EMR, Lambda, Bedrock)</div>
+            <div class="text-xs font-body text-slate-400 flex items-center gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.03);">☁️ Azure (ADF, Blob, Data Lake)</div>
+            <div class="text-xs font-body text-slate-400 flex items-center gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.03);">☁️ Google Cloud (GCS, Vertex AI)</div>
+            <div class="text-xs font-body text-slate-400 flex items-center gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.03);">❄️ Snowflake</div>
+            <div class="text-xs font-body text-slate-400 flex items-center gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.03);">🧱 Databricks</div>
+            <div class="text-xs font-body text-slate-400 flex items-center gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.03);">🌀 Apache Airflow</div>
+            <div class="text-xs font-body text-slate-400 flex items-center gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.03);">🏭 SAP (BTP, S/4HANA, BW)</div>
+            <div class="text-xs font-body text-slate-400 flex items-center gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.03);">🔧 Jenkins / GitLab CI</div>
+            <div class="text-xs font-body text-slate-400 flex items-center gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.03);">🔐 CyberArk</div>
+            <div class="text-xs font-body text-slate-400 flex items-center gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.03);">📊 Dynatrace / Datadog</div>
+            <div class="text-xs font-body text-slate-400 flex items-center gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.03);">🖥️ IBM z/OS Mainframe</div>
+            <div class="text-xs font-body text-slate-400 flex items-center gap-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.03);">🤖 CrewAI / Agentic AI</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- ========== BENEFITS ========== -->
+  <section id="benefits" class="relative px-6 py-24">
+    <div class="relative z-10 max-w-5xl mx-auto w-full">
+
+      <!-- Why Control-M -->
+      <div class="text-center mb-14">
+        <span class="section-badge reveal mb-4">Why Control-M</span>
+        <h2 class="reveal reveal-delay-1 font-display font-bold text-white mt-4" style="font-size:clamp(2rem,4.5vw,3rem);line-height:1.15;letter-spacing:-0.01em;">Why Choose <span class="gradient-text">Control-M?</span></h2>
+        <p class="reveal reveal-delay-2 font-body text-slate-400 mt-4 max-w-xl mx-auto text-sm">Real benefits reported by enterprise users — and an honest look at the tradeoffs.</p>
+      </div>
+
+      <!-- Pros -->
+      <div class="grid md:grid-cols-2 gap-5 mb-6">
+        <div class="benefit-row reveal">
+          <div class="check-icon">✓</div>
+          <div>
+            <h3 class="font-display font-bold text-base text-white mb-1">50% Reduction in Manual Monitoring</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Centralizing job scheduling eliminates the need to check multiple systems. One dashboard tracks all jobs, dependencies, and bottlenecks across every environment.</p>
+          </div>
+        </div>
+        <div class="benefit-row reveal reveal-delay-1">
+          <div class="check-icon">✓</div>
+          <div>
+            <h3 class="font-display font-bold text-base text-white mb-1">Handles 100,000 Executions/Day per Server</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Built for massive scale. Enterprises process tens of thousands of SAP jobs, mainframe batches, and data pipeline runs daily without performance degradation.</p>
+          </div>
+        </div>
+        <div class="benefit-row reveal reveal-delay-2">
+          <div class="check-icon">✓</div>
+          <div>
+            <h3 class="font-display font-bold text-base text-white mb-1">Automatic Failure Recovery</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Failed jobs are automatically retried, rerouted to fallback paths, or escalated with alerts — before SLAs are breached. No overnight on-call scramble needed.</p>
+          </div>
+        </div>
+        <div class="benefit-row reveal reveal-delay-3">
+          <div class="check-icon">✓</div>
+          <div>
+            <h3 class="font-display font-bold text-base text-white mb-1">Start Orchestrating in 24 Hours (SaaS)</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">The SaaS version requires no infrastructure setup. New users report being up and running within one day — workflows, agents, and integrations configured via the web UI.</p>
+          </div>
+        </div>
+        <div class="benefit-row reveal">
+          <div class="check-icon">✓</div>
+          <div>
+            <h3 class="font-display font-bold text-base text-white mb-1">Unified Mainframe + Cloud View</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Native IBM z/OS support alongside AWS, Azure, and GCP. COBOL, JCL, and PL/I processes run alongside Kubernetes pods and Snowflake jobs on one pane of glass.</p>
+          </div>
+        </div>
+        <div class="benefit-row reveal reveal-delay-1">
+          <div class="check-icon">✓</div>
+          <div>
+            <h3 class="font-display font-bold text-base text-white mb-1">Jobs-as-Code for DevOps</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Define, test, and deploy jobs using JSON or Python in CI/CD pipelines (Jenkins, GitLab). Workflow definitions live in version control alongside your application code.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cons card -->
+      <div class="card-glass rounded-2xl p-8 mb-14 reveal">
+        <h3 class="font-display font-bold text-lg text-white mb-5 flex items-center gap-2"><span>⚠️</span> Known Limitations to Consider</h3>
+        <div class="grid md:grid-cols-3 gap-6">
+          <div>
+            <p class="font-body text-slate-300 text-sm font-medium mb-1">Steep Learning Curve</p>
+            <p class="font-body text-slate-500 text-xs leading-relaxed">The UI is complex and documentation for advanced scenarios can be sparse. Plan for a proper onboarding period and training investment.</p>
+          </div>
+          <div>
+            <p class="font-body text-slate-300 text-sm font-medium mb-1">High Licensing Cost</p>
+            <p class="font-body text-slate-500 text-xs leading-relaxed">BMC is phasing out per-agent pricing in favor of per-job licensing. SaaS pricing is considered expensive by smaller teams. Budget for negotiation.</p>
+          </div>
+          <div>
+            <p class="font-body text-slate-300 text-sm font-medium mb-1">Complex Upgrades</p>
+            <p class="font-body text-slate-500 text-xs leading-relaxed">Self-hosted upgrade processes can be time-consuming. BMC's AMIGO program helps with upgrade planning, but execution still requires careful coordination.</p>
+          </div>
+        </div>
+      </div>
+
+
+
+      <!-- Competitors comparison -->
+      <div class="text-center mb-10">
+        <span class="section-badge reveal mb-4" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:#fca5a5;">Comparison</span>
+        <h2 class="reveal reveal-delay-1 font-display font-bold text-white mt-4" style="font-size:clamp(1.8rem,3.5vw,2.5rem);line-height:1.2;">Control-M vs. <span class="gradient-text">Alternatives</span></h2>
+      </div>
+
+      <div class="card-glass rounded-2xl overflow-hidden reveal">
+        <table class="compare-table w-full">
+          <thead>
+            <tr>
+              <th>Tool</th>
+              <th>Best For</th>
+              <th>Key Strength</th>
+              <th>vs. Control-M</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="font-display font-bold text-blue-300">AutoSys (Broadcom)</td>
+              <td>High-volume batch scheduling</td>
+              <td>Scalability, cost-effectiveness</td>
+              <td>Lacks Jobs-as-Code; fewer cloud integrations</td>
+            </tr>
+            <tr>
+              <td class="font-display font-bold text-green-300">Apache Airflow</td>
+              <td>Data engineers, Python pipelines</td>
+              <td>Open-source, Python-native</td>
+              <td>No enterprise SLA mgmt; requires DevOps skill</td>
+            </tr>
+            <tr>
+              <td class="font-display font-bold text-purple-300">Redwood RunMyJobs</td>
+              <td>SaaS-first, AI automation</td>
+              <td>25+ scripting languages, AI built-in</td>
+              <td>Gartner Leader; strong migration program</td>
+            </tr>
+            <tr>
+              <td class="font-display font-bold text-yellow-300">CA Automic</td>
+              <td>Complex hybrid ERP workloads</td>
+              <td>SAP/ERP depth, scripting flexibility</td>
+              <td>More flexible pricing; less cloud-native</td>
+            </tr>
+            <tr>
+              <td class="font-display font-bold text-cyan-300">ActiveBatch</td>
+              <td>Non-technical teams</td>
+              <td>Low-code visual editor, REST API adapter</td>
+              <td>Easier onboarding; lighter enterprise depth</td>
+            </tr>
+            <tr>
+              <td class="font-display font-bold text-orange-300">AWS Step Functions</td>
+              <td>AWS-native serverless workflows</td>
+              <td>Deep AWS integration, pay-per-use</td>
+              <td>AWS-only; no mainframe or cross-cloud support</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========== CONTACT ========== -->
+  <section id="contact" class="relative min-h-screen flex items-center justify-center px-6 py-24">
+    <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse 60% 60% at 50% 60%, rgba(6,182,212,0.07) 0%, transparent 65%);"></div>
+
+    <div class="relative z-10 max-w-2xl mx-auto w-full text-center">
+      <span class="section-badge reveal mb-4 inline-block">Contact</span>
+      <h2 class="reveal reveal-delay-1 font-display font-bold text-4xl md:text-5xl text-white mt-4 mb-5">Get in <span class="gradient-text">Touch</span></h2>
+      <p class="reveal reveal-delay-2 font-body text-slate-400 mb-12 leading-relaxed">
+        Ready to transform your workload automation? Contact us to learn more about Control-M.
+      </p>
+
+      <!-- Contact card -->
+      <div class="reveal reveal-delay-3 card-glass rounded-3xl p-10 md:p-14">
+        <!-- Phone icon -->
+        <div class="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style="background: linear-gradient(135deg, rgba(37,99,235,0.2), rgba(6,182,212,0.2)); border: 1px solid rgba(37,99,235,0.3);">
+          <svg class="w-9 h-9 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+          </svg>
+        </div>
+
+        <h3 class="font-display font-bold text-2xl text-white mb-4">Call Us Today</h3>
+        <a class="font-display font-bold text-4xl md:text-5xl gradient-text hover:opacity-80 transition-opacity block mb-2">
+          (0216) 577 69 21
+        </a>
+        <p class="font-body text-slate-500 text-sm mt-3 mb-8">Available 24 hours a day, 7 days a week.</p>
+
+        <div class="border-t border-slate-800/60 pt-8">
+          <p class="font-body text-slate-500 text-sm mb-3">Or email us at:</p>
+          <a href="mailto:info@controlm-demo.com" class="font-body text-blue-400 hover:text-blue-300 transition-colors text-lg">
+            info@vbt.com.tr
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </div><!-- /page-main -->
+
+  <!-- ========== PAGE: AI WORKFLOWS ========== -->
+  <div id="page-ai" class="page">
+
+    <!-- AI Hero -->
+    <section class="relative min-h-[60vh] flex items-center justify-center pt-28 pb-20 px-6 overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse 70% 60% at 50% 30%, rgba(99,102,241,0.18) 0%, transparent 65%), radial-gradient(ellipse 50% 40% at 80% 70%, rgba(168,85,247,0.1) 0%, transparent 55%);"></div>
+      <div class="relative z-10 max-w-4xl mx-auto text-center">
+        <button onclick="showPage('main')" class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-300 font-body text-sm mb-8 transition-colors group">
+          <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          Back to Control-M
+        </button>
+        
+        <h1 class="ai-section-title text-white mb-6" style="font-size: clamp(2.2rem, 5.5vw, 4rem); line-height: 1.1; letter-spacing: -0.02em;">
+          Run AI Reliably<br/><span style="background: linear-gradient(135deg, #a78bfa, #06B6D4, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">in Production</span>
+        </h1>
+        <p class="font-body text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
+          Ensure AI workflows and AI agents execute reliably at scale across hybrid, multi-cloud, and on-premises systems — with full visibility, SLA control, and automated recovery.
+        </p>
+        <!-- Internal pill nav -->
+        <div class="ai-pill-nav mt-10">
+          <a href="#ai-definition" class="ai-pill">What is it?</a>
+          <a href="#ai-vs-agentic" class="ai-pill">vs. Agentic</a>
+          <a href="#ai-how-helps" class="ai-pill">How it Helps</a>
+          <a href="#ai-use-cases" class="ai-pill">Use Cases</a>
+          <a href="#ai-foundations" class="ai-pill">Foundations</a>
+          <a href="#ai-different" class="ai-pill">Why Control-M</a>
+          <a href="#ai-faq" class="ai-pill">FAQs</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- What is AI Workflow Orchestration -->
+    <section id="ai-definition" class="px-6 py-20">
+      <div class="max-w-4xl mx-auto">
+        <div class="card-glass rounded-3xl p-10 md:p-14">
+          <span class="section-badge mb-5 inline-block" style="background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.3);color:#c4b5fd;">Definition</span>
+          <h2 class="ai-section-title text-white text-3xl mb-6">What is AI Workflow Orchestration?</h2>
+          <p class="font-body text-slate-400 leading-relaxed mb-5">
+            AI workflow orchestration acts as the control system for complex AI environments — coordinating data pipelines, model execution, dependencies, triggers, and error handling to ensure reliable operations.
+          </p>
+          <p class="font-body text-slate-400 leading-relaxed">
+            Running AI in production can be like managing air traffic in unpredictable skies. Data arrives continuously, some systems act autonomously, and models trigger in real time — requiring precise coordination to avoid delays or failures. As AI systems evolve, agentic orchestration introduces autonomous decision-making, making reliable execution even more critical.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI vs Agentic comparison table -->
+    <section id="ai-vs-agentic" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(99,102,241,0.12);border-color:rgba(99,102,241,0.3);color:#c4b5fd;">Comparison</span>
+          <h2 class="ai-section-title text-white text-3xl mt-4">AI Workflow Orchestration vs. Agentic Orchestration</h2>
+          <p class="font-body text-slate-500 mt-3 max-w-xl mx-auto text-sm">Two complementary approaches — not competing ones. In production, they work together.</p>
+        </div>
+        <div class="card-glass rounded-2xl overflow-hidden">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th>AI Workflow Orchestration</th>
+                <th>Agentic Orchestration</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Primary focus</td><td>Reliable execution of workflows</td><td>Autonomous decision-making and actions</td></tr>
+              <tr><td>What it manages</td><td>Data pipelines, model execution, system dependencies</td><td>AI agents that plan, reason, and take action</td></tr>
+              <tr><td>Strength</td><td>Predictability, control, and scalability</td><td>Adaptability and dynamic behavior</td></tr>
+              <tr><td>Challenge solved</td><td>Ensuring AI runs correctly every time</td><td>Enabling AI to respond to changing conditions</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-6 card-glass rounded-2xl p-6 flex gap-4 items-start">
+          <div class="feat-icon flex-shrink-0" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.25);">💡</div>
+          <div>
+            <p class="font-body text-slate-300 text-sm leading-relaxed"><strong class="text-white">In production, they work together:</strong> AI agents decide what actions to take. Workflow orchestration ensures those actions execute reliably. Without orchestration, AI agents become unpredictable. Without agentic capabilities, workflows remain rigid.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it helps - fraud detection example -->
+    <section id="ai-how-helps" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.25);color:#67e8f9;">How It Helps</span>
+          <h2 class="ai-section-title text-white text-3xl mt-4">How AI Workflow Orchestration Helps</h2>
+          <p class="font-body text-slate-500 mt-3 text-sm">Example: Real-Time Fraud Detection — a bank evaluates every transaction instantly.</p>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.2);">🔗</div>
+            <h3 class="font-display font-bold text-white mb-2">End-to-End Coordination</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Connects transaction data pipelines, AI model, and decision systems into a single managed flow.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.2);">🧩</div>
+            <h3 class="font-display font-bold text-white mb-2">Dependency Management</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Fraud models run only when all required data (history, geolocation, risk signals) is validated, preventing errors.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.2);">⚡</div>
+            <h3 class="font-display font-bold text-white mb-2">Real-Time Execution</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Workflows trigger instantly on each transaction, scoring in milliseconds for immediate decisions.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);">🔄</div>
+            <h3 class="font-display font-bold text-white mb-2">Automatic Failure Handling</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Retries, fallback logic, or alternate paths prevent transaction failures or customer friction.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.2);">📊</div>
+            <h3 class="font-display font-bold text-white mb-2">Full Visibility & SLA Control</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Operations teams monitor every step, ensuring decisions meet strict timing thresholds.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Use Cases -->
+    <section id="ai-use-cases" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.25);color:#d8b4fe;">Use Cases</span>
+          <h2 class="ai-section-title text-white text-3xl mt-4">Core Use Cases</h2>
+        </div>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div class="benefit-row" style="border-color:rgba(168,85,247,0.15);">
+            <div class="check-icon" style="background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.25);color:#d8b4fe;">⚡</div>
+            <div>
+              <h3 class="font-display font-bold text-white mb-1">Real-Time Decisioning</h3>
+              <p class="font-body text-slate-400 text-sm">Coordinate data ingestion, model scoring, and decisions in milliseconds.</p>
+            </div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(168,85,247,0.15);">
+            <div class="check-icon" style="background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.25);color:#d8b4fe;">🔁</div>
+            <div>
+              <h3 class="font-display font-bold text-white mb-1">End-to-End AI Pipelines</h3>
+              <p class="font-body text-slate-400 text-sm">Orchestrate workflows from data preparation to execution to downstream actions.</p>
+            </div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(168,85,247,0.15);">
+            <div class="check-icon" style="background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.25);color:#d8b4fe;">🤖</div>
+            <div>
+              <h3 class="font-display font-bold text-white mb-1">Continuous Model Operations (MLOps)</h3>
+              <p class="font-body text-slate-400 text-sm">Automate retraining, validation, and deployment to maintain accuracy.</p>
+            </div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(168,85,247,0.15);">
+            <div class="check-icon" style="background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.25);color:#d8b4fe;">🎯</div>
+            <div>
+              <h3 class="font-display font-bold text-white mb-1">AI Agent Orchestration</h3>
+              <p class="font-body text-slate-400 text-sm">Trigger and coordinate AI agents across workflows while enforcing policies and tracking actions for auditable outcomes.</p>
+            </div>
+          </div>
+          <div class="benefit-row md:col-span-2" style="border-color:rgba(168,85,247,0.15);">
+            <div class="check-icon" style="background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.25);color:#d8b4fe;">🛡️</div>
+            <div>
+              <h3 class="font-display font-bold text-white mb-1">AI Compliance and Control</h3>
+              <p class="font-body text-slate-400 text-sm">Ensure AI workflows adhere to internal policies and regulations. Automate audit logging, enforce role-based controls, and provide traceability for AI-driven decisions.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The New Foundations -->
+    <section id="ai-foundations" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(37,99,235,0.12);border-color:rgba(37,99,235,0.3);color:#93c5fd;">Foundations</span>
+          <h2 class="ai-section-title text-white text-3xl mt-4">The New Foundations for AI-Driven Operations</h2>
+          <p class="font-body text-slate-500 mt-3 text-sm max-w-xl mx-auto">Control-M enables teams to design, execute, and govern AI workflows reliably in production.</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="card-glass rounded-2xl p-8 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1" style="background: linear-gradient(90deg, #2563EB, #06B6D4);"></div>
+            <div class="text-4xl mb-4">🏗️</div>
+            <h3 class="ai-section-title text-white text-xl mb-3">Build Smarter</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Design AI and enterprise workflows in minutes using natural language, with full visibility into dependencies and execution paths.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-8 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1" style="background: linear-gradient(90deg, #7c3aed, #06B6D4);"></div>
+            <div class="text-4xl mb-4">💪</div>
+            <h3 class="ai-section-title text-white text-xl mb-3">Run Stronger</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Ensure uptime and reliability with event-based triggering, predictive insights, and automated recovery before issues impact business outcomes.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-8 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1" style="background: linear-gradient(90deg, #059669, #06B6D4);"></div>
+            <div class="text-4xl mb-4">🔄</div>
+            <h3 class="ai-section-title text-white text-xl mb-3">Manage Continuously</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Automate AI governance, enforce policies at runtime, and maintain full auditability across workflows and AI agents.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Control-M is Different table -->
+    <section id="ai-different" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(37,99,235,0.12);border-color:rgba(37,99,235,0.3);color:#93c5fd;">Differentiation</span>
+          <h2 class="ai-section-title text-white text-3xl mt-4">How Control-M Is Different</h2>
+        </div>
+        <div class="card-glass rounded-2xl overflow-hidden">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th>What's Different</th>
+                <th>Impact</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>End-to-end orchestration</td><td>One platform across all systems</td><td>No gaps or handoffs</td></tr>
+              <tr><td>Event-driven execution</td><td>Runs in real time</td><td>Supports instant decisions</td></tr>
+              <tr><td>Full visibility</td><td>Single view of all workflows</td><td>Faster troubleshooting</td></tr>
+              <tr><td>SLA management</td><td>Built-in tracking and notifications</td><td>Consistent outcomes</td></tr>
+              <tr><td>Automated recovery</td><td>Automatically handles failures</td><td>Less downtime</td></tr>
+              <tr><td>Hybrid support</td><td>Works across on-prem, cloud, and hybrid</td><td>No environment limits</td></tr>
+              <tr><td>Agent-aware orchestration</td><td>Coordinates workflows triggered by AI agents</td><td>Reliable agent-driven execution</td></tr>
+              <tr><td>AI workflow oversight</td><td>Enforces policies and provides audit trails</td><td>Compliant and auditable AI execution</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Accordion -->
+    <section id="ai-faq" class="px-6 py-16">
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(37,99,235,0.12);border-color:rgba(37,99,235,0.3);color:#93c5fd;">FAQs</span>
+          <h2 class="ai-section-title text-white text-3xl mt-4">Frequently Asked Questions</h2>
+        </div>
+        <div class="card-glass rounded-2xl p-6 md:p-10">
+          <div class="faq-item">
+            <button class="faq-btn" onclick="toggleFaq(this)">
+              Does Control-M integrate with Databricks, SageMaker, and Azure ML?
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">Yes. Control-M can trigger and monitor jobs across these platforms directly, so you don't need separate scripts or manual coordination tools.</div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-btn" onclick="toggleFaq(this)">
+              How does Control-M provide visibility into AI workflow SLA compliance?
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">It shows every step of your workflows, highlights delays or errors, and tracks whether workflows meet their timing commitments — alerting teams proactively before business impact occurs.</div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-btn" onclick="toggleFaq(this)">
+              Can Control-M automatically handle failures in AI workflows?
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">Yes. It can retry failed steps, use alternate paths, and alert the right people without stopping the entire workflow — keeping business processes running even when individual steps fail.</div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-btn" onclick="toggleFaq(this)">
+              How does Control-M scale AI workflows as volume increases?
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">Control-M can run hundreds or thousands of workflows simultaneously, across multiple environments, without slowing down or breaking dependencies between jobs.</div>
+          </div>
+          <div class="faq-item" style="border-bottom: none;">
+            <button class="faq-btn" onclick="toggleFaq(this)">
+              Does Control-M support event-driven AI workflows for real-time decisioning?
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">Workflows can trigger immediately when specific events occur — such as a new transaction, data update, or agent action — enabling AI systems to act in real time without polling delays.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Banner -->
+    <section class="px-6 py-20">
+      <div class="max-w-3xl mx-auto text-center">
+        <div class="card-glass rounded-3xl p-12 relative overflow-hidden">
+          <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(99,102,241,0.1) 0%, transparent 70%);"></div>
+          <div class="relative z-10">
+            <div class="text-5xl mb-4">✦</div>
+            <h2 class="ai-section-title text-white text-2xl md:text-3xl mb-4">See AI Workflow Orchestration in Action</h2>
+            <p class="font-body text-slate-400 mb-8 leading-relaxed">See how to run AI workflows and AI agent-driven processes reliably in production across systems.</p>
+            <div class="flex flex-wrap gap-4 justify-center">
+              <button onclick="showPage('main')" class="btn-glow px-8 py-3.5 rounded-xl text-white font-body font-medium">
+                <span>← Back to Control-M</span>
+              </button>
+              <a href="#contact" onclick="showPage('main')" class="px-8 py-3.5 rounded-xl font-body font-medium text-slate-300 border border-slate-700 hover:border-slate-500 hover:text-white transition-all">
+                Contact Sales
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /page-ai -->
+
+  <!-- ========== PAGE: DATA PIPELINE ========== -->
+  <div id="page-data" class="page">
+    <section class="relative min-h-[55vh] flex items-center justify-center pt-28 pb-16 px-6 overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 70% 60% at 50% 30%,rgba(6,182,212,0.15) 0%,transparent 65%);"></div>
+      <div class="relative z-10 max-w-4xl mx-auto text-center">
+        <div class="section-badge mb-6 inline-block" style="background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.35);color:#67e8f9;">🧱 Data Pipeline Orchestration</div>
+        <h1 class="font-display font-bold text-white mb-5" style="font-size:clamp(2.2rem,5.5vw,4rem);line-height:1.1;letter-spacing:-0.02em;">Orchestrate Every<br/><span style="background:linear-gradient(135deg,#06B6D4,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Data Pipeline</span></h1>
+        <p class="font-body text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">Turn fragmented big data pipelines into one manageable workflow — from ingestion to analysis — across every cloud, platform, and on-premises environment.</p>
+        <div class="ai-pill-nav mt-8">
+          <a href="#data-what" class="ai-pill" onclick="navScrollSection('data-what')">What It Does</a>
+          <a href="#data-integrations" class="ai-pill" onclick="navScrollSection('data-integrations')">Integrations</a>
+          <a href="#data-usecases" class="ai-pill" onclick="navScrollSection('data-usecases')">Use Cases</a>
+          <a href="#data-how" class="ai-pill" onclick="navScrollSection('data-how')">How It Works</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="data-what" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="card-glass rounded-3xl p-10 md:p-14 mb-8">
+          <span class="section-badge mb-5 inline-block" style="background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.3);color:#67e8f9;">Overview</span>
+          <h2 class="font-display font-bold text-white text-3xl mb-5">Control-M for Data Pipeline Orchestration</h2>
+          <p class="font-body text-slate-400 leading-relaxed mb-4">As organizations adopt big data technologies like Hadoop, Spark, Snowflake, and Databricks, data pipelines grow increasingly complex — spanning multiple platforms, teams, and environments. Control-M brings all these pipelines under one orchestration layer with full visibility, dependency management, and SLA tracking.</p>
+          <p class="font-body text-slate-400 leading-relaxed">Unlike ad-hoc scripts or siloed schedulers, Control-M lets you define the entire pipeline as a workflow — from raw data ingestion, through transformation and quality checks, all the way to loading into your data warehouse and triggering downstream reports or ML models.</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-5">
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.2);">🔁</div>
+            <h3 class="font-display font-bold text-white mb-2">End-to-End Orchestration</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Manage the full data lifecycle — ingestion, transformation, validation, loading, and post-processing — in a single workflow with visual dependency mapping.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.2);">⚡</div>
+            <h3 class="font-display font-bold text-white mb-2">Real-Time vs. Micro-Batch</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Control-M SaaS lets you choose per pipeline whether to ingest data in real-time or micro-batches — optimizing for both speed and cost depending on the use case.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.2);">📊</div>
+            <h3 class="font-display font-bold text-white mb-2">SLA & Data Quality</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Define SLA windows for when data must be ready. Control-M monitors pipeline progress and alerts proactively — before downstream systems or business reports are impacted.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="data-integrations" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.3);color:#67e8f9;">Integrations</span>
+          <h2 class="font-display font-bold text-white text-3xl mt-4">Native Connectors for Every Platform</h2>
+          <p class="font-body text-slate-500 mt-3 text-sm max-w-xl mx-auto">Control-M provides pre-built plug-ins so you don't write custom scripts to connect platforms — just configure and orchestrate.</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">❄️</div><p class="font-display font-bold text-white text-sm">Snowflake</p><p class="font-body text-slate-500 text-xs mt-1">SQL jobs, transformations, data loading</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🧱</div><p class="font-display font-bold text-white text-sm">Databricks</p><p class="font-body text-slate-500 text-xs mt-1">Spark notebooks, ML pipelines</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🌀</div><p class="font-display font-bold text-white text-sm">Apache Airflow</p><p class="font-body text-slate-500 text-xs mt-1">Trigger and monitor Airflow DAGs</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">☁️</div><p class="font-display font-bold text-white text-sm">Azure Data Factory</p><p class="font-body text-slate-500 text-xs mt-1">ADF pipelines, Data Lake Gen2</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🔶</div><p class="font-display font-bold text-white text-sm">AWS EMR / Glue</p><p class="font-body text-slate-500 text-xs mt-1">Spark on EMR, Glue ETL jobs</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🐘</div><p class="font-display font-bold text-white text-sm">Hadoop</p><p class="font-body text-slate-500 text-xs mt-1">Hive, Pig, MapReduce, Oozie</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🔵</div><p class="font-display font-bold text-white text-sm">Google BigQuery</p><p class="font-body text-slate-500 text-xs mt-1">Query scheduling, Vertex AI feeds</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">📡</div><p class="font-display font-bold text-white text-sm">Apache Kafka</p><p class="font-body text-slate-500 text-xs mt-1">Event-driven pipeline triggers</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="data-usecases" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.3);color:#67e8f9;">Use Cases</span>
+          <h2 class="font-display font-bold text-white text-3xl mt-4">Common Data Pipeline Scenarios</h2>
+        </div>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div class="benefit-row" style="border-color:rgba(6,182,212,0.2);">
+            <div class="check-icon" style="background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.25);color:#22d3ee;">📥</div>
+            <div><h3 class="font-display font-bold text-white mb-1">Daily ETL & Data Warehouse Loading</h3><p class="font-body text-slate-400 text-sm">Orchestrate nightly extract-transform-load jobs across source systems into Snowflake or Redshift, with dependency checks ensuring data arrives before reports run.</p></div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(6,182,212,0.2);">
+            <div class="check-icon" style="background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.25);color:#22d3ee;">🤖</div>
+            <div><h3 class="font-display font-bold text-white mb-1">ML Model Training Pipelines</h3><p class="font-body text-slate-400 text-sm">Trigger Databricks or SageMaker training jobs when fresh data lands, chain validation checks, and deploy updated models — all in one automated workflow.</p></div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(6,182,212,0.2);">
+            <div class="check-icon" style="background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.25);color:#22d3ee;">⚡</div>
+            <div><h3 class="font-display font-bold text-white mb-1">Real-Time Fraud & Risk Scoring</h3><p class="font-body text-slate-400 text-sm">Event-driven workflows trigger on every transaction, coordinate data enrichment and model scoring in milliseconds, and route decisions to downstream systems.</p></div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(6,182,212,0.2);">
+            <div class="check-icon" style="background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.25);color:#22d3ee;">📊</div>
+            <div><h3 class="font-display font-bold text-white mb-1">Business Intelligence & Reporting</h3><p class="font-body text-slate-400 text-sm">Ensure BI dashboards always show fresh data by orchestrating the full refresh pipeline — raw data → aggregation → cache invalidation — with SLA enforcement.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="data-how" class="px-6 py-16">
+      <div class="max-w-4xl mx-auto">
+        <div class="card-glass rounded-3xl p-10 md:p-12">
+          <span class="section-badge mb-5 inline-block" style="background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.3);color:#67e8f9;">How It Works</span>
+          <h2 class="font-display font-bold text-white text-2xl mb-6">A Typical Big Data Workflow</h2>
+          <div class="space-y-4">
+            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(6,182,212,0.4);">1</div><div><p class="font-body text-slate-300 text-sm font-medium">Data arrives in S3 / Azure Data Lake (event trigger)</p><p class="font-body text-slate-500 text-xs mt-0.5">Control-M detects the file event and starts the workflow automatically — no polling required.</p></div></div>
+            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(6,182,212,0.4);">2</div><div><p class="font-body text-slate-300 text-sm font-medium">Spark job runs on Databricks / EMR (transformation)</p><p class="font-body text-slate-500 text-xs mt-0.5">Control-M submits the Spark job, monitors cluster status, and waits for successful completion before proceeding.</p></div></div>
+            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(6,182,212,0.4);">3</div><div><p class="font-body text-slate-300 text-sm font-medium">Data quality check (validation job)</p><p class="font-body text-slate-500 text-xs mt-0.5">A custom script or Great Expectations check verifies row counts, null thresholds, and schema. On failure, an alert fires and the pipeline halts — not the whole environment.</p></div></div>
+            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(6,182,212,0.4);">4</div><div><p class="font-body text-slate-300 text-sm font-medium">Load to Snowflake (COPY INTO)</p><p class="font-body text-slate-500 text-xs mt-0.5">Control-M runs the Snowflake load job, confirms row counts match, and updates an event condition.</p></div></div>
+            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(6,182,212,0.4);">5</div><div><p class="font-body text-slate-300 text-sm font-medium">Downstream jobs trigger (BI refresh, reports, ML)</p><p class="font-body text-slate-500 text-xs mt-0.5">The OUT condition from step 4 releases dependent jobs across other SMART folders — BI dashboards refresh, scheduled reports generate, ML model scores update.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="px-6 py-16">
+      <div class="max-w-3xl mx-auto text-center">
+        <div class="card-glass rounded-3xl p-10 relative overflow-hidden">
+          <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 80% 60% at 50% 50%,rgba(6,182,212,0.08) 0%,transparent 70%);"></div>
+          <div class="relative z-10">
+            <div class="text-4xl mb-4">🧱</div>
+            <h2 class="font-display font-bold text-white text-2xl mb-3">Ready to orchestrate your data pipelines?</h2>
+            <p class="font-body text-slate-400 mb-7 text-sm">Connect every data platform into one reliable, monitored workflow.</p>
+            <div class="flex flex-wrap gap-4 justify-center">
+              <button onclick="showPage('main')" class="btn-glow px-7 py-3 rounded-xl text-white font-body font-medium text-sm"><span>← Back to Control-M</span></button>
+              <button onclick="showPage('main');setTimeout(()=>document.getElementById('contact').scrollIntoView({behavior:'smooth'}),100)" class="px-7 py-3 rounded-xl font-body font-medium text-sm text-slate-300 border border-slate-700 hover:border-slate-500 hover:text-white transition-all">Contact Sales</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div><!-- /page-data -->
+
+  <!-- ========== PAGE: JOBS-AS-CODE ========== -->
+  <div id="page-jac" class="page">
+    <section class="relative min-h-[55vh] flex items-center justify-center pt-28 pb-16 px-6 overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 70% 60% at 50% 30%,rgba(16,185,129,0.15) 0%,transparent 65%);"></div>
+      <div class="relative z-10 max-w-4xl mx-auto text-center">
+        <div class="section-badge mb-6 inline-block" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.35);color:#6ee7b7;">⚙️ Jobs-as-Code</div>
+        <h1 class="font-display font-bold text-white mb-5" style="font-size:clamp(2.2rem,5.5vw,4rem);line-height:1.1;letter-spacing:-0.02em;">Take a<br/><span style="background:linear-gradient(135deg,#34d399,#06B6D4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Jobs-as-Code Approach</span></h1>
+        <p class="font-body text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">Use your existing DevOps tools to build workflow automation while building your business logic — saving time and improving quality through a single CI/CD pipeline.</p>
+        <div class="ai-pill-nav mt-8">
+          <a href="#jac-what" class="ai-pill" onclick="navScrollSection('jac-what')">What It Is</a>
+          <a href="#jac-how" class="ai-pill" onclick="navScrollSection('jac-how')">How It Works</a>
+          <a href="#jac-api" class="ai-pill" onclick="navScrollSection('jac-api')">Automation API</a>
+          <a href="#jac-tutorials" class="ai-pill" onclick="navScrollSection('jac-tutorials')">Tutorials</a>
+          <a href="#jac-tools" class="ai-pill" onclick="navScrollSection('jac-tools')">Tools</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="jac-what" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="card-glass rounded-3xl p-10 md:p-14 mb-8">
+          <span class="section-badge mb-5 inline-block" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7;">What It Is</span>
+          <h2 class="font-display font-bold text-white text-3xl mb-5">Workflow Automation, Built Like Software</h2>
+          <p class="font-body text-slate-400 leading-relaxed mb-4">Traditionally, job scheduling was done through GUIs — click-and-configure workflows that lived only inside the scheduler. Jobs-as-Code changes that: you define your jobs and workflows in JSON or Python code, store them in Git, test them like software, and deploy them through your existing CI/CD pipeline.</p>
+          <p class="font-body text-slate-400 leading-relaxed">This means your automation is versioned, reviewable, and repeatable. A developer can add a new job to a workflow, open a pull request, get it reviewed, and deploy it to production — exactly like any other code change.</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-5">
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.2);">📝</div>
+            <h3 class="font-display font-bold text-white mb-2">Code in Any Editor</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Write job definitions in JSON or Python using any text editor or IDE. No GUI required. Jobs live alongside application code in the same repository.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.2);">🧪</div>
+            <h3 class="font-display font-bold text-white mb-2">Automated Testing</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Run jobs against a local Control-M Workbench environment to test before deploying. Use your existing testing frameworks — pytest, JUnit, anything.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.2);">🚀</div>
+            <h3 class="font-display font-bold text-white mb-2">CI/CD Deployment</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Deploy job definitions through Jenkins, GitLab CI, GitHub Actions, or any CI/CD system — promoting automatically from dev to staging to production.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="jac-how" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7;">How It Works</span>
+          <h2 class="font-display font-bold text-white text-3xl mt-4">The Jobs-as-Code Pipeline</h2>
+        </div>
+        <div class="card-glass rounded-2xl p-8 mb-6">
+          <div class="grid md:grid-cols-3 gap-6 text-center">
+            <div>
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);">1️⃣</div>
+              <h4 class="font-display font-bold text-white text-sm mb-2">Build</h4>
+              <p class="font-body text-slate-400 text-xs leading-relaxed">Developer writes job definitions in JSON/Python and commits to Git. The Automation API CLI validates syntax and structure locally.</p>
+            </div>
+            <div>
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);">2️⃣</div>
+              <h4 class="font-display font-bold text-white text-sm mb-2">Test</h4>
+              <p class="font-body text-slate-400 text-xs leading-relaxed">CI pipeline deploys jobs to a Control-M Workbench (local dev environment), runs them, and asserts expected outputs — just like unit tests for your application.</p>
+            </div>
+            <div>
+              <div class="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);">3️⃣</div>
+              <h4 class="font-display font-bold text-white text-sm mb-2">Deploy</h4>
+              <p class="font-body text-slate-400 text-xs leading-scale">On merge to main, the pipeline deploys the updated job definitions to staging then production Control-M — no manual GUI work required.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-glass rounded-2xl p-7">
+          <h3 class="font-display font-bold text-white text-lg mb-4">Example — A Simple Job Definition in JSON</h3>
+          <pre class="font-mono text-xs text-green-300 leading-relaxed overflow-x-auto" style="background:rgba(0,0,0,0.3);padding:1rem;border-radius:0.75rem;border:1px solid rgba(16,185,129,0.15);">{
+  "FinanceWorkflow": {
+    "Type": "Folder",
+    "ControlmServer": "prod-server",
+    "When": { "Weekdays": ["MON","TUE","WED","THU","FRI"] },
+
+    "ExtractData": {
+      "Type": "Job:Script",
+      "FileName": "extract.sh",
+      "FilePath": "/jobs/finance",
+      "RunAs": "svc-finance"
+    },
+    "TransformData": {
+      "Type": "Job:Script",
+      "FileName": "transform.py",
+      "FilePath": "/jobs/finance",
+      "RunAs": "svc-finance"
+    },
+    "LoadToSnowflake": {
+      "Type": "Job:Database:Snowflake",
+      "ConnectionProfile": "snowflake-prod",
+      "SQL": "COPY INTO finance_dw FROM @stage/finance/"
+    },
+    "Flow": {
+      "Type": "Flow",
+      "Sequence": ["ExtractData", "TransformData", "LoadToSnowflake"]
+    }
+  }
+}</pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="jac-api" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7;">Automation API</span>
+          <h2 class="font-display font-bold text-white text-3xl mt-4">The Control-M Automation API</h2>
+          <p class="font-body text-slate-500 mt-3 text-sm max-w-xl mx-auto">A full REST API giving programmatic access to every Control-M capability — not just job deployment, but operational tasks too.</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div class="benefit-row" style="border-color:rgba(16,185,129,0.2);">
+            <div class="check-icon" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.25);color:#34d399;">📦</div>
+            <div><h3 class="font-display font-bold text-white mb-1">Deploy Job Definitions</h3><p class="font-body text-slate-400 text-sm">Push new or updated SMART Folder and job definitions from code into a running Control-M environment via a single API call.</p></div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(16,185,129,0.2);">
+            <div class="check-icon" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.25);color:#34d399;">▶️</div>
+            <div><h3 class="font-display font-bold text-white mb-1">Order & Run Jobs</h3><p class="font-body text-slate-400 text-sm">Programmatically order existing SMART Folders with override parameters — trigger workflows from your applications, not just the scheduler.</p></div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(16,185,129,0.2);">
+            <div class="check-icon" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.25);color:#34d399;">👤</div>
+            <div><h3 class="font-display font-bold text-white mb-1">Manage Users & Roles</h3><p class="font-body text-slate-400 text-sm">Automate user provisioning and role assignments based on HR system changes — no manual GUI updates needed when people join or change teams.</p></div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(16,185,129,0.2);">
+            <div class="check-icon" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.25);color:#34d399;">📋</div>
+            <div><h3 class="font-display font-bold text-white mb-1">Generate Reports</h3><p class="font-body text-slate-400 text-sm">Retrieve job execution reports, status summaries, and audit logs programmatically — integrate Control-M data into your observability dashboards.</p></div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(16,185,129,0.2);">
+            <div class="check-icon" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.25);color:#34d399;">🔧</div>
+            <div><h3 class="font-display font-bold text-white mb-1">Manage Agents & Workloads</h3><p class="font-body text-slate-400 text-sm">Check agent health, enable/disable workload policies, and manage host groups — all scriptable for automated operations workflows.</p></div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(16,185,129,0.2);">
+            <div class="check-icon" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.25);color:#34d399;">🤖</div>
+            <div><h3 class="font-display font-bold text-white mb-1">Agentless Scheduling</h3><p class="font-body text-slate-400 text-sm">Define remote hosts via the API to run jobs on machines without a deployed Agent — ideal for cloud functions, containers, and ephemeral environments.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="jac-tutorials" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7;">Tutorials</span>
+          <h2 class="font-display font-bold text-white text-3xl mt-4">Common Operational Tasks via API</h2>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Check status of agents in hostgroups</h4><p class="font-body text-slate-400 text-xs">Gather hostgroups, find the agents, and check their connectivity status automatically using the API.</p></div>
+          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Agentless scheduling via remote SSH</h4><p class="font-body text-slate-400 text-xs">Define a remote host to run jobs without deploying any scheduling agent on the target machine.</p></div>
+          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Manipulate workload policies</h4><p class="font-body text-slate-400 text-xs">Self-service for flexing workload limits during high-activity periods or planned maintenance windows.</p></div>
+          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Order jobs from external automation tools</h4><p class="font-body text-slate-400 text-xs">Submit or manipulate Control-M jobs from other tools — Ansible, Terraform, custom scripts — via the REST API.</p></div>
+          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Get started with CI/CD integration</h4><p class="font-body text-slate-400 text-xs">Set up a full Jenkins or GitLab pipeline that builds, tests, and deploys job definitions on every commit.</p></div>
+          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Integrate with Jenkins / GitHub Actions</h4><p class="font-body text-slate-400 text-xs">Use the Automation API CLI as a pipeline step to deploy jobs — works with any CI/CD system that can run CLI commands.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="jac-tools" class="px-6 py-16">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7;">Tools</span>
+          <h2 class="font-display font-bold text-white text-3xl mt-4">Developer Tools & Community</h2>
+        </div>
+        <div class="grid md:grid-cols-3 gap-5">
+          <div class="card-glass rounded-2xl p-7 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#34d399,#06B6D4);"></div>
+            <div class="text-3xl mb-3">🖥️</div>
+            <h3 class="font-display font-bold text-white mb-2">Control-M Workbench</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Free local development environment. Run a full Control-M instance on your laptop to develop and test jobs before they ever touch production.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#34d399,#06B6D4);"></div>
+            <div class="text-3xl mb-3">⌨️</div>
+            <h3 class="font-display font-bold text-white mb-2">Automation API CLI</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Command-line interface for all API operations — build, test, deploy, and run jobs from scripts and pipelines. Works on Linux, Mac, and Windows.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#34d399,#06B6D4);"></div>
+            <div class="text-3xl mb-3">🐙</div>
+            <h3 class="font-display font-bold text-white mb-2">GitHub Community</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">The <strong class="text-slate-300">controlm/automation-api-community-solutions</strong> repo on GitHub has hundreds of ready-to-use examples, contributed by BMC and the Control-M user community.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="px-6 py-16">
+      <div class="max-w-3xl mx-auto text-center">
+        <div class="card-glass rounded-3xl p-10 relative overflow-hidden">
+          <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 80% 60% at 50% 50%,rgba(16,185,129,0.07) 0%,transparent 70%);"></div>
+          <div class="relative z-10">
+            <div class="text-4xl mb-4">⚙️</div>
+            <h2 class="font-display font-bold text-white text-2xl mb-3">Ready to automate like a developer?</h2>
+            <p class="font-body text-slate-400 mb-7 text-sm">Put your workflows in version control and deploy them like code.</p>
+            <div class="flex flex-wrap gap-4 justify-center">
+              <button onclick="showPage('main')" class="btn-glow px-7 py-3 rounded-xl text-white font-body font-medium text-sm"><span>← Back to Control-M</span></button>
+              <button onclick="showPage('main');setTimeout(()=>document.getElementById('contact').scrollIntoView({behavior:'smooth'}),100)" class="px-7 py-3 rounded-xl font-body font-medium text-sm text-slate-300 border border-slate-700 hover:border-slate-500 hover:text-white transition-all">Contact Sales</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div><!-- /page-jac -->
+
+  <!-- ========== PAGE: SAP ========== -->
+  <div id="page-sap" class="page">
+    <section class="relative min-h-[55vh] flex items-center justify-center pt-28 pb-16 px-6 overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 70% 60% at 50% 30%,rgba(245,158,11,0.13) 0%,transparent 65%);"></div>
+      <div class="relative z-10 max-w-4xl mx-auto text-center">
+        <div class="section-badge mb-6 inline-block" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.35);color:#fcd34d;">🏭 SAP Certified</div>
+        <h1 class="font-display font-bold text-white mb-5" style="font-size:clamp(2.2rem,5.5vw,4rem);line-height:1.1;letter-spacing:-0.02em;">Control-M<br/><span style="background:linear-gradient(135deg,#fbbf24,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">for SAP</span></h1>
+        <p class="font-body text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">RISE with SAP certified. Modernize SAP workflows, accelerate your S/4HANA transformation, and orchestrate SAP and non-SAP systems from one unified platform.</p>
+        <div class="ai-pill-nav mt-8">
+          <a href="#sap-overview" class="ai-pill" onclick="navScrollSection('sap-overview')">Overview</a>
+          <a href="#sap-platforms" class="ai-pill" onclick="navScrollSection('sap-platforms')">SAP Platforms</a>
+          <a href="#sap-usecases" class="ai-pill" onclick="navScrollSection('sap-usecases')">Use Cases</a>
+          <a href="#sap-why" class="ai-pill" onclick="navScrollSection('sap-why')">Why Control-M</a>
+          <a href="#sap-migration" class="ai-pill" onclick="navScrollSection('sap-migration')">Migration</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="sap-overview" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="card-glass rounded-3xl p-10 md:p-14 mb-8">
+          <span class="section-badge mb-5 inline-block" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#fcd34d;">Overview</span>
+          <h2 class="font-display font-bold text-white text-3xl mb-5">Modernize SAP Workflows at Every Layer</h2>
+          <p class="font-body text-slate-400 leading-relaxed mb-4">SAP environments are the backbone of business operations for most enterprises — payroll, procurement, order management, finance, and manufacturing all run through SAP. But SAP's native job scheduling (SM36/SM37 in ECC, or SAP Job Scheduler in BTP) only manages jobs within SAP itself. Control-M extends orchestration across SAP and every non-SAP system in a single unified view.</p>
+          <p class="font-body text-slate-400 leading-relaxed">BMC is an official SAP partner and Control-M is <strong class="text-slate-200">RISE with SAP certified for S/4HANA Cloud</strong> transformation — meaning it's validated to support your migration path from ECC to S/4HANA without disrupting existing workflows.</p>
+          <div class="mt-6 p-5 rounded-xl flex items-center gap-4" style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);">
+            <span class="text-2xl">🏆</span>
+            <p class="font-body text-slate-300 text-sm"><strong class="text-white">SAP Certified Integration</strong> — Control-M is listed on the SAP Store and certified for integration with RISE with SAP S/4HANA Cloud, SAP BTP, and SAP ECC.</p>
+          </div>
+        </div>
+        <div class="grid md:grid-cols-3 gap-5">
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.2);">🔭</div>
+            <h3 class="font-display font-bold text-white mb-2">Unified View</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">See SAP batch jobs alongside mainframe jobs, cloud pipelines, and file transfers — all on one dashboard. No more context-switching between SAP SM37 and your other schedulers.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.2);">⚡</div>
+            <h3 class="font-display font-bold text-white mb-2">Cross-System Dependencies</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Define dependencies that span SAP and non-SAP: a Snowflake data load finishes → triggers an SAP BW InfoPackage → sends a file via MFT → updates an Oracle DB. All in one flow.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7">
+            <div class="feat-icon" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.2);">🛡️</div>
+            <h3 class="font-display font-bold text-white mb-2">Error-Free JCL & Restarts</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Control-M validates JCL before submission and eliminates manual effort when restarting failed SAP jobs — automatically resuming from the correct step rather than restarting from scratch.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sap-platforms" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#fcd34d;">SAP Platforms</span>
+          <h2 class="font-display font-bold text-white text-3xl mt-4">Supported SAP Environments</h2>
+        </div>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div class="card-glass rounded-2xl p-7 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#f59e0b,#f97316);"></div>
+            <h3 class="font-display font-bold text-white text-lg mb-3">SAP S/4HANA (Cloud & On-Prem)</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Orchestrate S/4HANA workflows for finance, procurement, and supply chain. RISE with SAP certified — validated for the S/4HANA Cloud transformation path. Supports both public and private cloud editions.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#f59e0b,#f97316);"></div>
+            <h3 class="font-display font-bold text-white text-lg mb-3">SAP Business Technology Platform (BTP)</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Manage SAP BTP integration flows, data pipelines, and automation alongside enterprise workflows. Control-M can trigger and monitor BTP jobs and coordinate results with downstream systems.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#f59e0b,#f97316);"></div>
+            <h3 class="font-display font-bold text-white text-lg mb-3">SAP ECC (Legacy On-Prem)</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Full support for existing ECC environments — batch jobs, ABAP programs, InfoPackages, and process chains. Import existing SAP job definitions and manage them alongside modern workflows without rewriting anything.</p>
+          </div>
+          <div class="card-glass rounded-2xl p-7 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#f59e0b,#f97316);"></div>
+            <h3 class="font-display font-bold text-white text-lg mb-3">SAP BW / BW/4HANA</h3>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Orchestrate BW InfoPackages, process chains, and data store activations. Coordinate BW loads with upstream data pipeline dependencies so your BI environment always has fresh, validated data.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sap-usecases" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#fcd34d;">Use Cases</span>
+          <h2 class="font-display font-bold text-white text-3xl mt-4">Common SAP Orchestration Scenarios</h2>
+        </div>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div class="benefit-row" style="border-color:rgba(245,158,11,0.2);">
+            <div class="check-icon" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.25);color:#fbbf24;">💰</div>
+            <div><h3 class="font-display font-bold text-white mb-1">Payroll Processing</h3><p class="font-body text-slate-400 text-sm">Orchestrate the end-to-end payroll run: extract HR data, run SAP payroll ABAP programs, validate results, post to FI, generate payment files, and transfer securely to banks — across SAP and non-SAP systems in one workflow.</p></div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(245,158,11,0.2);">
+            <div class="check-icon" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.25);color:#fbbf24;">📆</div>
+            <div><h3 class="font-display font-bold text-white mb-1">Month-End Financial Close</h3><p class="font-body text-slate-400 text-sm">Coordinate month-end closing jobs across SAP FI/CO, consolidation systems, and reporting tools — ensuring the correct sequence with automatic retry on failures and SLA monitoring.</p></div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(245,158,11,0.2);">
+            <div class="check-icon" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.25);color:#fbbf24;">🚚</div>
+            <div><h3 class="font-display font-bold text-white mb-1">Supply Chain & Procurement</h3><p class="font-body text-slate-400 text-sm">Trigger purchase order workflows, goods receipt confirmations, and supplier EDI file transfers — coordinating SAP MM/SD with external logistics platforms and file transfer systems.</p></div>
+          </div>
+          <div class="benefit-row" style="border-color:rgba(245,158,11,0.2);">
+            <div class="check-icon" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.25);color:#fbbf24;">📊</div>
+            <div><h3 class="font-display font-bold text-white mb-1">BW Data Loads & Reporting</h3><p class="font-body text-slate-400 text-sm">Schedule BW InfoPackage loads after source system extracts complete, chain process chains in dependency order, and ensure reports run only after all data is validated and loaded.</p></div>
+          </div>
+          <div class="benefit-row md:col-span-2" style="border-color:rgba(245,158,11,0.2);">
+            <div class="check-icon" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.25);color:#fbbf24;">☁️</div>
+            <div><h3 class="font-display font-bold text-white mb-1">SAP to Cloud Migration Workflows</h3><p class="font-body text-slate-400 text-sm">During S/4HANA migration, Control-M bridges old ECC batch schedules and new S/4HANA workflows — running both in parallel during transition, then cutting over without downtime. Accelerates migration by eliminating manual schedule re-entry.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sap-why" class="px-6 py-16">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+          <span class="section-badge mb-4 inline-block" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#fcd34d;">Why Control-M</span>
+          <h2 class="font-display font-bold text-white text-3xl mt-4">Control-M vs. Native SAP Scheduling</h2>
+        </div>
+        <div class="card-glass rounded-2xl overflow-hidden">
+          <table class="compare-table w-full">
+            <thead><tr><th>Capability</th><th>Native SAP (SM36/SM37)</th><th>Control-M for SAP</th></tr></thead>
+            <tbody>
+              <tr><td>Visibility scope</td><td>SAP jobs only</td><td>SAP + all non-SAP systems in one view</td></tr>
+              <tr><td>Cross-system dependencies</td><td>Not supported</td><td>Full cross-platform dependency chains</td></tr>
+              <tr><td>SLA management</td><td>Manual monitoring</td><td>Automated SLA tracking with proactive alerts</td></tr>
+              <tr><td>Failed job restart</td><td>Manual, from the beginning</td><td>Automatic retry from the correct failed step</td></tr>
+              <tr><td>Audit & compliance</td><td>Limited SAP logs only</td><td>Full enterprise audit trail across all systems</td></tr>
+              <tr><td>Cloud migration support</td><td>No native bridge to S/4HANA</td><td>Parallel operation during ECC → S/4HANA migration</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="sap-migration" class="px-6 py-16">
+      <div class="max-w-4xl mx-auto">
+        <div class="card-glass rounded-3xl p-10 md:p-12">
+          <span class="section-badge mb-5 inline-block" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#fcd34d;">Migration</span>
+          <h2 class="font-display font-bold text-white text-2xl mb-4">Migrating from SAP Job Scheduler to Control-M</h2>
+          <p class="font-body text-slate-400 leading-relaxed mb-6">Control-M includes conversion tools that import existing SAP batch job definitions and translate them into Control-M SMART Folders automatically — no manual re-entry. The process:</p>
+          <div class="space-y-4">
+            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(245,158,11,0.4);">1</div><div><p class="font-body text-slate-300 text-sm font-medium">Export existing SAP job definitions</p><p class="font-body text-slate-500 text-xs mt-0.5">Use Control-M's SAP conversion utility to extract job schedules from SM37 or BTP Job Scheduler.</p></div></div>
+            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(245,158,11,0.4);">2</div><div><p class="font-body text-slate-300 text-sm font-medium">Auto-convert to Control-M SMART Folders</p><p class="font-body text-slate-500 text-xs mt-0.5">The conversion tool maps SAP scheduling attributes to Control-M equivalents — calendars, dependencies, parameters, and post-processing actions.</p></div></div>
+            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(245,158,11,0.4);">3</div><div><p class="font-body text-slate-300 text-sm font-medium">Run both systems in parallel</p><p class="font-body text-slate-500 text-xs mt-0.5">Validate Control-M schedules alongside existing SAP schedules before cutting over — no risk to production during migration.</p></div></div>
+            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(245,158,11,0.4);">4</div><div><p class="font-body text-slate-300 text-sm font-medium">Decommission SAP scheduler</p><p class="font-body text-slate-500 text-xs mt-0.5">Once validated, disable SAP's native scheduler and manage all SAP jobs through Control-M — unified with the rest of your enterprise automation.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="px-6 py-16">
+      <div class="max-w-3xl mx-auto text-center">
+        <div class="card-glass rounded-3xl p-10 relative overflow-hidden">
+          <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 80% 60% at 50% 50%,rgba(245,158,11,0.07) 0%,transparent 70%);"></div>
+          <div class="relative z-10">
+            <div class="text-4xl mb-4">🏭</div>
+            <h2 class="font-display font-bold text-white text-2xl mb-3">Accelerate your SAP transformation?</h2>
+            <p class="font-body text-slate-400 mb-7 text-sm">Connect SAP and every other system into one orchestrated, compliant workflow platform.</p>
+            <div class="flex flex-wrap gap-4 justify-center">
+              <button onclick="showPage('main')" class="btn-glow px-7 py-3 rounded-xl text-white font-body font-medium text-sm"><span>← Back to Control-M</span></button>
+              <button onclick="showPage('main');setTimeout(()=>document.getElementById('contact').scrollIntoView({behavior:'smooth'}),100)" class="px-7 py-3 rounded-xl font-body font-medium text-sm text-slate-300 border border-slate-700 hover:border-slate-500 hover:text-white transition-all">Contact Sales</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div><!-- /page-sap -->
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="relative z-10 py-8 px-6">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-md flex items-center justify-center text-white font-display font-bold text-sm"
+          style="background: linear-gradient(135deg, #2563EB, #06B6D4);">C</div>
+        <span class="font-display text-white font-semibold text-sm">Control-M</span>
+      </div>
+      <p class="font-body text-slate-600 text-sm">© 2026 Control-M Dashboard. Enterprise Workload Automation Platform.</p>
+      <div class="flex gap-5">
+        <a href="#home" class="font-body text-slate-600 hover:text-slate-400 text-xs transition-colors">Home</a>
+        <a href="#about" class="font-body text-slate-600 hover:text-slate-400 text-xs transition-colors">About</a>
+        <a href="#features" class="font-body text-slate-600 hover:text-slate-400 text-xs transition-colors">Features</a>
+        <a href="#contact" class="font-body text-slate-600 hover:text-slate-400 text-xs transition-colors">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========== SCRIPTS ========== -->
+  <script>
+    // ── Hamburger toggle ──
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const hamOpen = document.getElementById('ham-open');
+    const hamClose = document.getElementById('ham-close');
+
+    hamburger.addEventListener('click', () => {
+      mobileMenu.classList.toggle('open');
+      hamOpen.classList.toggle('hidden');
+      hamClose.classList.toggle('hidden');
+    });
+
+    // Close mobile menu on link click
+    mobileMenu.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        mobileMenu.classList.remove('open');
+        hamOpen.classList.remove('hidden');
+        hamClose.classList.add('hidden');
+      });
+    });
+
+    // ── Active nav link on scroll ──
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    function updateActiveLink() {
+      let current = '';
+      sections.forEach(sec => {
+        const top = sec.offsetTop - 100;
+        if (window.scrollY >= top) current = sec.id;
+      });
+      navLinks.forEach(link => {
+        link.classList.toggle('active', link.dataset.section === current);
+      });
+    }
+    window.addEventListener('scroll', updateActiveLink, { passive: true });
+    updateActiveLink();
+
+    // ── Scroll-reveal ──
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.12 });
+    reveals.forEach(el => observer.observe(el));
+
+    // ── Smooth scroll for all anchor links ──
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const id = a.getAttribute('href').slice(1);
+        const target = document.getElementById(id);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+
+    // ── SPA: Page switcher ──
+    function showPage(name) {
+      // Hide all page containers to reset the view
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      
+      const target = document.getElementById('page-' + name);
+      if (target) {
+        // Activate target page and scroll to top smoothly
+        target.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // --- DYNAMIC NAVIGATION BAR LOGIC ---
+        
+        // List containing all navigation group IDs for easy management
+        const navIds = ['nav-main-links', 'nav-ai-links', 'nav-data-links', 'nav-jac-links', 'nav-sap-links'];
+        
+        // Hide every navigation group initially to prevent overlapping
+        navIds.forEach(id => {
+          const navElement = document.getElementById(id);
+          if (navElement) navElement.classList.add('hidden');
+        });
+
+        // Map page names to their respective navigation group IDs
+        const navMap = {
+          'ai': 'nav-ai-links',
+          'data': 'nav-data-links',
+          'jac': 'nav-jac-links',
+          'sap': 'nav-sap-links',
+          'main': 'nav-main-links'
+        };
+
+        // Show the mapped navigation or fallback to main navigation
+        const navToShow = navMap[name] || 'nav-main-links';
+        const activeNav = document.getElementById(navToShow);
+        if (activeNav) activeNav.classList.remove('hidden');
+      }
+    }
+    // Make globally accessible
+    window.showPage = showPage;
+
+    // Separate reveal observer for reuse
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.1 });
+
+    // ── FAQ accordion ──
+    function toggleFaq(btn) {
+      const answer = btn.nextElementSibling;
+      const isOpen = btn.classList.contains('open');
+      // Close all
+      document.querySelectorAll('.faq-btn').forEach(b => {
+        b.classList.remove('open');
+        b.nextElementSibling.classList.remove('open');
+      });
+      // Open clicked if it was closed
+      if (!isOpen) {
+        btn.classList.add('open');
+        answer.classList.add('open');
+      }
+    }
+    window.toggleFaq = toggleFaq;
+  </script>
+</body>
+</html>
