@@ -606,8 +606,8 @@
         <div class="grid md:grid-cols-2 gap-10 items-center">
           <div>
             <h3 class="font-display font-bold text-2xl text-white mb-4">Temel Fikir</h3>
-            <p class="font-body text-slate-400 leading-relaxed mb-4">Her kuruluş, süreçlerin güvenilir ve zamanında çalışmasına bağlıdır — maaşların hesaplanması ve dağıtılması, veritabanlarının yedeklenmesi ve yeniden başlatılması, raporların oluşturulması, veri hatlarının beslenmesi. Control-M bu süreçleri, <strong class="text-slate-200">işler</strong> olarak adlandırılan yapıda, organize ve bağımlılık bilincine sahip bir şekilde otomatikleştirir.</p>
-            <p class="font-body text-slate-400 leading-relaxed">Bir <strong class="text-slate-200">iş</strong>, bir yürütme birimidir — bir komut dosyası, komut veya harici bir uygulamanın parçası. İşler sırayla çalışarak bir <strong class="text-slate-200">iş akışı</strong> oluşturur. Control-M, bu iş akışlarını kuruluşunuzun kullandığı her platform, uygulama ve altyapı genelinde yönetir.</p>
+            <p class="font-body text-slate-400 leading-relaxed mb-4">Her kuruluş, süreçlerin güvenilir ve zamanında çalışmasına bağlıdır — maaşların hesaplanması ve dağıtılması, veritabanlarının yedeklenmesi ve yeniden başlatılması, raporların oluşturulması, veri hatlarının beslenmesi. Control-M bu süreçleri, <strong class="text-slate-200">işler (Jobs)</strong> olarak adlandırılan yapıda, organize ve bağımlılık bilincine sahip bir şekilde otomatikleştirir.</p>
+            <p class="font-body text-slate-400 leading-relaxed">Bir <strong class="text-slate-200">iş</strong>, bir yürütme birimidir — bir komut dosyası, komut veya harici bir uygulamanın parçası. İşler sırayla çalışarak bir <strong class="text-slate-200">iş akışı (Workflow)</strong> oluşturur. Control-M, bu iş akışlarını kuruluşunuzun kullandığı her platform, uygulama ve altyapı genelinde yönetir.</p>
           </div>
           <div class="space-y-4">
             <div class="flex items-start gap-3">
@@ -873,12 +873,12 @@
         <div class="card-glass rounded-2xl p-7 reveal">
           <h3 class="font-display font-bold text-white text-lg mb-5">📖 Ana Terminoloji</h3>
           <div class="space-y-3">
-            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">Job</span><p class="font-body text-slate-400 text-xs leading-relaxed">A single execution unit — script, OS command, or app-level task (Hadoop, SAP, Snowflake plug-in)</p></div>
-            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">SMART Folder</span><p class="font-body text-slate-400 text-xs leading-relaxed">A container whose scheduling, prerequisites, and actions are inherited by all child jobs automatically</p></div>
-            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">Flow</span><p class="font-body text-slate-400 text-xs leading-relaxed">An order-dependency definition: Job B only runs if Job A ends successfully</p></div>
-            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">New Day</span><p class="font-body text-slate-400 text-xs leading-relaxed">Daily reset cycle (default midnight) when completed folders are cleared and next-day jobs are ordered</p></div>
-            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">Run Queue</span><p class="font-body text-slate-400 text-xs leading-relaxed">The set of jobs scheduled to execute today, in Waiting or Executing state</p></div>
-            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">SLA Job</span><p class="font-body text-slate-400 text-xs leading-relaxed">Maps the critical path of a workflow that must complete within a user-defined time window</p></div>
+            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">Job</span><p class="font-body text-slate-400 text-xs leading-relaxed">Tek bir çalıştırma birimi — script, işletim sistemi komutu veya uygulama seviyesinde görev (Hadoop, SAP, Snowflake eklentisi)</p></div>
+            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">SMART Folder</span><p class="font-body text-slate-400 text-xs leading-relaxed">Zamanlama, ön koşullar ve aksiyonları otomatik olarak içindeki tüm job’lara miras bırakan bir kapsayıcı</p></div>
+            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">Flow</span><p class="font-body text-slate-400 text-xs leading-relaxed">Sıra-bağımlılık tanımı: Job A başarıyla tamamlanmadan Job B çalışmaz</p></div>
+            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">New Day</span><p class="font-body text-slate-400 text-xs leading-relaxed">Günlük sıfırlama döngüsü (varsayılan gece yarısı); tamamlanan klasörler temizlenir ve yeni günün job’ları başlatılır</p></div>
+            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">Run Queue</span><p class="font-body text-slate-400 text-xs leading-relaxed">Bugün çalıştırılmak üzere planlanan, Waiting veya Executing durumundaki job’lar kümesi</p></div>
+            <div class="flex gap-3"><span class="font-display font-bold text-blue-400 text-xs w-28 flex-shrink-0 pt-0.5">SLA Job</span><p class="font-body text-slate-400 text-xs leading-relaxed">Kullanıcı tarafından tanımlanan zaman aralığında tamamlanması gereken iş akışının kritik yolunu temsil eder</p></div>
           </div>
         </div>
         <div class="card-glass rounded-2xl p-7 reveal reveal-delay-1">
@@ -918,7 +918,7 @@
           <div class="check-icon">✓</div>
           <div>
             <h3 class="font-display font-bold text-base text-white mb-1">Manuel İzlemede %50 Azalma</h3>
-            <p class="font-body text-slate-400 text-sm leading-relaxed">Centralizing job scheduling eliminates the need to check multiple systems. One dashboard tracks all jobs, dependencies, and bottlenecks across every environment.</p>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">İş planlamasını merkezileştirmek, birden fazla sistemi kontrol etme ihtiyacını ortadan kaldırır. Tek bir kontrol paneli, her ortamdaki tüm işleri, bağımlılıkları ve darboğazları takip eder.</p>
           </div>
         </div>
         <div class="benefit-row reveal reveal-delay-1">
@@ -1459,14 +1459,14 @@
           <p class="font-body text-slate-500 mt-3 text-sm max-w-xl mx-auto">Control-M, önceden oluşturulmuş eklentiler sunarak platformları birbirine bağlamak için özel komut dosyaları yazmanıza gerek kalmamasını sağlar; sadece yapılandırın ve düzenleyin.</p>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">❄️</div><p class="font-display font-bold text-white text-sm">Snowflake</p><p class="font-body text-slate-500 text-xs mt-1">SQL jobs, transformations, data loading</p></div>
-          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🧱</div><p class="font-display font-bold text-white text-sm">Databricks</p><p class="font-body text-slate-500 text-xs mt-1">Spark notebooks, ML pipelines</p></div>
-          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🌀</div><p class="font-display font-bold text-white text-sm">Apache Airflow</p><p class="font-body text-slate-500 text-xs mt-1">Trigger and monitor Airflow DAGs</p></div>
-          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">☁️</div><p class="font-display font-bold text-white text-sm">Azure Data Factory</p><p class="font-body text-slate-500 text-xs mt-1">ADF pipelines, Data Lake Gen2</p></div>
-          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🔶</div><p class="font-display font-bold text-white text-sm">AWS EMR / Glue</p><p class="font-body text-slate-500 text-xs mt-1">Spark on EMR, Glue ETL jobs</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">❄️</div><p class="font-display font-bold text-white text-sm">Snowflake</p><p class="font-body text-slate-500 text-xs mt-1">SQL job’ları, dönüşümler, veri yükleme</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🧱</div><p class="font-display font-bold text-white text-sm">Databricks</p><p class="font-body text-slate-500 text-xs mt-1">Spark notebook’ları, ML pipeline’ları</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🌀</div><p class="font-display font-bold text-white text-sm">Apache Airflow</p><p class="font-body text-slate-500 text-xs mt-1">Airflow DAG’lerini tetikleme ve izleme</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">☁️</div><p class="font-display font-bold text-white text-sm">Azure Data Factory</p><p class="font-body text-slate-500 text-xs mt-1">ADF pipeline’ları, Data Lake Gen2</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🔶</div><p class="font-display font-bold text-white text-sm">AWS EMR / Glue</p><p class="font-body text-slate-500 text-xs mt-1">EMR üzerinde Spark, Glue ETL job’ları</p></div>
           <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🐘</div><p class="font-display font-bold text-white text-sm">Hadoop</p><p class="font-body text-slate-500 text-xs mt-1">Hive, Pig, MapReduce, Oozie</p></div>
-          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🔵</div><p class="font-display font-bold text-white text-sm">Google BigQuery</p><p class="font-body text-slate-500 text-xs mt-1">Query scheduling, Vertex AI feeds</p></div>
-          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">📡</div><p class="font-display font-bold text-white text-sm">Apache Kafka</p><p class="font-body text-slate-500 text-xs mt-1">Event-driven pipeline triggers</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">🔵</div><p class="font-display font-bold text-white text-sm">Google BigQuery</p><p class="font-body text-slate-500 text-xs mt-1">Sorgu zamanlama, Vertex AI veri akışları</p></div>
+          <div class="card-glass rounded-xl p-5 text-center"><div class="text-2xl mb-2">📡</div><p class="font-display font-bold text-white text-sm">Apache Kafka</p><p class="font-body text-slate-500 text-xs mt-1">Olay tabanlı pipeline tetikleme</p></div>
         </div>
       </div>
     </section>
@@ -1626,10 +1626,10 @@
           <span class="section-badge mb-5 inline-block" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7;">Nedir</span>
           <h2 class="font-display font-bold text-white text-3xl mb-5">Yazılım Gibi Geliştirilen İş Akışı Otomasyonu</h2>
           <p class="font-body text-slate-400 leading-relaxed mb-4">
-            Geleneksel olarak job scheduling GUI üzerinden yapılırdı — tıkla ve yapılandır mantığıyla çalışan, sadece scheduler içinde yaşayan iş akışları. Jobs-as-Code bunu değiştirir: job’larınızı ve iş akışlarınızı JSON veya Python ile tanımlarsınız, Git’te saklarsınız, yazılım gibi test eder ve mevcut CI/CD pipeline’ınız ile deploy edersiniz.
+            Geleneksel olarak job scheduling GUI üzerinden yapılırdı — tıkla ve yapılandır mantığıyla çalışan, sadece scheduler içinde yaşayan iş akışları. Jobs-as-Code bunu değiştirir: işlerinizi ve iş akışlarınızı JSON veya Python ile tanımlarsınız, Git’te saklarsınız, yazılım gibi test eder ve mevcut CI/CD pipeline’ınız ile deploy edersiniz.
           </p>
           <p class="font-body text-slate-400 leading-relaxed">
-            Bu sayede otomasyonunuz versiyonlanabilir, incelenebilir ve tekrar üretilebilir hale gelir. Bir geliştirici yeni bir job ekler, pull request açar, incelemeden geçirir ve production’a deploy eder — tıpkı diğer kod değişiklikleri gibi.
+            Bu sayede otomasyonunuz versiyonlanabilir, incelenebilir ve tekrar üretilebilir hale gelir. Bir geliştirici yeni bir iş (job) ekler, pull request açar, incelemeden geçirir ve production’a deploy eder — tıpkı diğer kod değişiklikleri gibi.
           </p>
         </div>
         <div class="grid md:grid-cols-3 gap-5">
@@ -1637,21 +1637,21 @@
             <div class="feat-icon" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.2);">📝</div>
             <h3 class="font-display font-bold text-white mb-2">Her Editörde Kod Yaz</h3>
             <p class="font-body text-slate-400 text-sm leading-relaxed">
-              Job tanımlarını JSON veya Python ile istediğiniz editör ya da IDE’de yazın. GUI gerekmez. Job’lar uygulama koduyla aynı repoda tutulur.
+              İş tanımlarını JSON veya Python ile istediğiniz editör ya da IDE’de yazın. GUI gerekmez. İşler uygulama koduyla aynı repoda tutulur.
             </p>
           </div>
           <div class="card-glass rounded-2xl p-7">
             <div class="feat-icon" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.2);">🧪</div>
             <h3 class="font-display font-bold text-white mb-2">Otomatik Test</h3>
             <p class="font-body text-slate-400 text-sm leading-relaxed">
-              Deploy etmeden önce job’ları lokal Control-M Workbench ortamında test edin. Mevcut test araçlarınızı kullanın — pytest, JUnit vb.
+              Deploy etmeden önce işleri lokal Control-M Workbench ortamında test edin. Mevcut test araçlarınızı kullanın — pytest, JUnit vb.
             </p>
           </div>
           <div class="card-glass rounded-2xl p-7">
             <div class="feat-icon" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.2);">🚀</div>
             <h3 class="font-display font-bold text-white mb-2">CI/CD ile Dağıtım</h3>
             <p class="font-body text-slate-400 text-sm leading-relaxed">
-              Job tanımlarını Jenkins, GitLab CI, GitHub Actions veya herhangi bir CI/CD sistemi ile deploy edin — dev’den staging’e ve production’a otomatik geçiş sağlayın.
+              İş tanımlarını Jenkins, GitLab CI, GitHub Actions veya herhangi bir CI/CD sistemi ile deploy edin — dev’den staging’e ve production’a otomatik geçiş sağlayın.
             </p>
           </div>
         </div>
@@ -1670,27 +1670,27 @@
               <div class="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);">1️⃣</div>
               <h4 class="font-display font-bold text-white text-sm mb-2">Geliştir</h4>
               <p class="font-body text-slate-400 text-xs leading-relaxed">
-                Geliştirici job tanımlarını JSON/Python ile yazar ve Git’e commit eder. Automation API CLI, sözdizimini ve yapıyı lokal olarak doğrular.
+                Geliştirici iş tanımlarını JSON/Python ile yazar ve Git’e commit eder. Automation API CLI, sözdizimini ve yapıyı lokal olarak doğrular.
               </p>
             </div>
             <div>
               <div class="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);">2️⃣</div>
               <h4 class="font-display font-bold text-white text-sm mb-2">Test Et</h4>
               <p class="font-body text-slate-400 text-xs leading-relaxed">
-                CI pipeline job’ları Control-M Workbench’e (lokal geliştirme ortamı) deploy eder, çalıştırır ve beklenen çıktıları doğrular — tıpkı uygulama için unit test gibi.
+                CI pipeline işleri Control-M Workbench’e (lokal geliştirme ortamı) deploy eder, çalıştırır ve beklenen çıktıları doğrular — tıpkı uygulama için unit test gibi.
               </p>
             </div>
             <div>
               <div class="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);">3️⃣</div>
               <h4 class="font-display font-bold text-white text-sm mb-2">Dağıt</h4>
               <p class="font-body text-slate-400 text-xs leading-relaxed">
-                Main branch’e merge edildiğinde pipeline, güncellenmiş job tanımlarını staging ve ardından production Control-M ortamına deploy eder — manuel GUI işlemi gerekmez.
+                Main branch’e merge edildiğinde pipeline, güncellenmiş iş tanımlarını staging ve ardından production Control-M ortamına deploy eder — manuel GUI işlemi gerekmez.
               </p>
             </div>
           </div>
         </div>
         <div class="card-glass rounded-2xl p-7">
-          <h3 class="font-display font-bold text-white text-lg mb-4">Örnek — Basit Bir JSON Job Tanımı</h3>
+          <h3 class="font-display font-bold text-white text-lg mb-4">Örnek — Basit Bir JSON İş Tanımı</h3>
           <pre class="font-mono text-xs text-green-300 leading-relaxed overflow-x-auto" style="background:rgba(0,0,0,0.3);padding:1rem;border-radius:0.75rem;border:1px solid rgba(16,185,129,0.15);">{
       "FinanceWorkflow": {
         "Type": "Folder",
@@ -1729,16 +1729,16 @@
         <div class="text-center mb-10">
           <span class="section-badge mb-4 inline-block" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7;">Otomasyon API</span>
           <h2 class="font-display font-bold text-white text-3xl mt-4">Control-M Otomasyon API’si</h2>
-          <p class="font-body text-slate-500 mt-3 text-sm max-w-xl mx-auto">Control-M’in tüm yeteneklerine programatik erişim sağlayan kapsamlı bir REST API — sadece job dağıtımı değil, operasyonel işlemler de dahil.</p>
+          <p class="font-body text-slate-500 mt-3 text-sm max-w-xl mx-auto">Control-M’in tüm yeteneklerine programatik erişim sağlayan kapsamlı bir REST API — sadece iş dağıtımı değil, operasyonel işlemler de dahil.</p>
         </div>
         <div class="grid md:grid-cols-2 gap-5">
           <div class="benefit-row" style="border-color:rgba(16,185,129,0.2);">
             <div class="check-icon" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.25);color:#34d399;">📦</div>
-            <div><h3 class="font-display font-bold text-white mb-1">Job Tanımlarını Dağıt</h3><p class="font-body text-slate-400 text-sm">Koddan çalışan bir Control-M ortamına yeni veya güncellenmiş SMART Folder ve job tanımlarını tek bir API çağrısı ile gönderin.</p></div>
+            <div><h3 class="font-display font-bold text-white mb-1">İş Tanımlarını Dağıt</h3><p class="font-body text-slate-400 text-sm">Koddan çalışan bir Control-M ortamına yeni veya güncellenmiş SMART Folder ve iş tanımlarını tek bir API çağrısı ile gönderin.</p></div>
           </div>
           <div class="benefit-row" style="border-color:rgba(16,185,129,0.2);">
             <div class="check-icon" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.25);color:#34d399;">▶️</div>
-            <div><h3 class="font-display font-bold text-white mb-1">Job Başlat ve Çalıştır</h3><p class="font-body text-slate-400 text-sm">Override parametreleri ile mevcut SMART Folder’ları programatik olarak başlatın — iş akışlarını sadece scheduler’dan değil uygulamalarınızdan tetikleyin.</p></div>
+            <div><h3 class="font-display font-bold text-white mb-1">İş Başlat ve Çalıştır</h3><p class="font-body text-slate-400 text-sm">Override parametreleri ile mevcut SMART Folder’ları programatik olarak başlatın — iş akışlarını sadece scheduler’dan değil uygulamalarınızdan tetikleyin.</p></div>
           </div>
           <div class="benefit-row" style="border-color:rgba(16,185,129,0.2);">
             <div class="check-icon" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.25);color:#34d399;">👤</div>
@@ -1746,7 +1746,7 @@
           </div>
           <div class="benefit-row" style="border-color:rgba(16,185,129,0.2);">
             <div class="check-icon" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.25);color:#34d399;">📋</div>
-            <div><h3 class="font-display font-bold text-white mb-1">Rapor Oluştur</h3><p class="font-body text-slate-400 text-sm">Job çalışma raporlarını, durum özetlerini ve denetim kayıtlarını programatik olarak alın — Control-M verilerini gözlemlenebilirlik panellerinize entegre edin.</p></div>
+            <div><h3 class="font-display font-bold text-white mb-1">Rapor Oluştur</h3><p class="font-body text-slate-400 text-sm">İş çalışma raporlarını, durum özetlerini ve denetim kayıtlarını programatik olarak alın — Control-M verilerini gözlemlenebilirlik panellerinize entegre edin.</p></div>
           </div>
           <div class="benefit-row" style="border-color:rgba(16,185,129,0.2);">
             <div class="check-icon" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.25);color:#34d399;">🔧</div>
@@ -1754,7 +1754,7 @@
           </div>
           <div class="benefit-row" style="border-color:rgba(16,185,129,0.2);">
             <div class="check-icon" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.25);color:#34d399;">🤖</div>
-            <div><h3 class="font-display font-bold text-white mb-1">Agentsız Zamanlama</h3><p class="font-body text-slate-400 text-sm">API ile uzak host’ları tanımlayarak Agent kurulu olmayan makinelerde job çalıştırın — cloud fonksiyonları, container’lar ve geçici ortamlar için idealdir.</p></div>
+            <div><h3 class="font-display font-bold text-white mb-1">Agentsız Zamanlama</h3><p class="font-body text-slate-400 text-sm">API ile uzak host’ları tanımlayarak Agent kurulu olmayan makinelerde iş çalıştırın — cloud fonksiyonları, container’lar ve geçici ortamlar için idealdir.</p></div>
           </div>
         </div>
       </div>
@@ -1768,11 +1768,11 @@
         </div>
         <div class="grid md:grid-cols-2 gap-4">
           <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Hostgroup’lardaki agent durumunu kontrol et</h4><p class="font-body text-slate-400 text-xs">Hostgroup’ları topla, agent’ları bul ve API kullanarak bağlantı durumlarını otomatik olarak kontrol et.</p></div>
-          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Uzak SSH ile agentsız zamanlama</h4><p class="font-body text-slate-400 text-xs">Hedef makineye scheduling agent kurmadan job çalıştırmak için uzak bir host tanımla.</p></div>
+          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Uzak SSH ile agentsız zamanlama</h4><p class="font-body text-slate-400 text-xs">Hedef makineye scheduling agent kurmadan iş çalıştırmak için uzak bir host tanımla.</p></div>
           <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">İş yükü politikalarını yönet</h4><p class="font-body text-slate-400 text-xs">Yoğun kullanım dönemlerinde veya planlı bakım sırasında iş yükü limitlerini esnetmek için self-servis kullanım sağlar.</p></div>
-          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Harici otomasyon araçlarından job başlat</h4><p class="font-body text-slate-400 text-xs">REST API üzerinden Control-M job’larını diğer araçlardan (Ansible, Terraform, özel script’ler) tetikle veya yönet.</p></div>
-          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">CI/CD entegrasyonu ile başla</h4><p class="font-body text-slate-400 text-xs">Her commit’te job tanımlarını build, test ve deploy eden tam bir Jenkins veya GitLab pipeline kur.</p></div>
-          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Jenkins / GitHub Actions ile entegre et</h4><p class="font-body text-slate-400 text-xs">Automation API CLI’yi pipeline adımı olarak kullanarak job’ları deploy et — CLI çalıştırabilen tüm CI/CD sistemleriyle uyumludur.</p></div>
+          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Harici otomasyon araçlarından iş başlat</h4><p class="font-body text-slate-400 text-xs">REST API üzerinden Control-M işlerini diğer araçlardan (Ansible, Terraform, özel script’ler) tetikle veya yönet.</p></div>
+          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">CI/CD entegrasyonu ile başla</h4><p class="font-body text-slate-400 text-xs">Her commit’te iş tanımlarını build, test ve deploy eden tam bir Jenkins veya GitLab pipeline kur.</p></div>
+          <div class="card-glass rounded-xl p-5"><h4 class="font-display font-bold text-white text-sm mb-1">Jenkins / GitHub Actions ile entegre et</h4><p class="font-body text-slate-400 text-xs">Automation API CLI’yi pipeline adımı olarak kullanarak işleri deploy et — CLI çalıştırabilen tüm CI/CD sistemleriyle uyumludur.</p></div>
         </div>
       </div>
     </section>
@@ -1788,13 +1788,13 @@
             <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#34d399,#06B6D4);"></div>
             <div class="text-3xl mb-3">🖥️</div>
             <h3 class="font-display font-bold text-white mb-2">Control-M Workbench</h3>
-            <p class="font-body text-slate-400 text-sm leading-relaxed">Ücretsiz yerel geliştirme ortamı. Production’a gitmeden önce job’ları geliştirmek ve test etmek için laptop’unda tam bir Control-M instance çalıştır.</p>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Ücretsiz yerel geliştirme ortamı. Production’a gitmeden önce işleri geliştirmek ve test etmek için laptop’unda tam bir Control-M instance çalıştır.</p>
           </div>
           <div class="card-glass rounded-2xl p-7 text-center relative overflow-hidden">
             <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#34d399,#06B6D4);"></div>
             <div class="text-3xl mb-3">⌨️</div>
             <h3 class="font-display font-bold text-white mb-2">Automation API CLI</h3>
-            <p class="font-body text-slate-400 text-sm leading-relaxed">Tüm API işlemleri için komut satırı arayüzü — job’ları script ve pipeline’lardan build et, test et, deploy et ve çalıştır. Linux, Mac ve Windows’ta çalışır.</p>
+            <p class="font-body text-slate-400 text-sm leading-relaxed">Tüm API işlemleri için komut satırı arayüzü — işleri script ve pipeline’lardan build et, test et, deploy et ve çalıştır. Linux, Mac ve Windows’ta çalışır.</p>
           </div>
           <div class="card-glass rounded-2xl p-7 text-center relative overflow-hidden">
             <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#34d399,#06B6D4);"></div>
@@ -1871,7 +1871,7 @@
             <div class="feat-icon" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.2);">🔭</div>
             <h3 class="font-display font-bold text-white mb-2">Tekil Görünüm</h3>
             <p class="font-body text-slate-400 text-sm leading-relaxed">
-              SAP batch job’larını, mainframe job’larını, cloud pipeline’larını ve dosya transferlerini tek bir panelde görüntüleyin. Artık SAP SM37 ile diğer scheduler’lar arasında geçiş yapmanıza gerek yok.
+              SAP batch işlerini, mainframe işlerini, cloud pipeline’larını ve dosya transferlerini tek bir panelde görüntüleyin. Artık SAP SM37 ile diğer scheduler’lar arasında geçiş yapmanıza gerek yok.
             </p>
           </div>
           <div class="card-glass rounded-2xl p-7">
@@ -1885,7 +1885,7 @@
             <div class="feat-icon" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.2);">🛡️</div>
             <h3 class="font-display font-bold text-white mb-2">Hatasız JCL ve Restart</h3>
             <p class="font-body text-slate-400 text-sm leading-relaxed">
-              Control-M, JCL’i çalıştırmadan önce doğrular ve başarısız SAP job’larını yeniden başlatırken manuel işlemleri ortadan kaldırır — baştan başlatmak yerine doğru adımdan devam eder.
+              Control-M, JCL’i çalıştırmadan önce doğrular ve başarısız SAP işlerini yeniden başlatırken manuel işlemleri ortadan kaldırır — baştan başlatmak yerine doğru adımdan devam eder.
             </p>
           </div>
         </div>
@@ -1910,14 +1910,14 @@
             <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#f59e0b,#f97316);"></div>
             <h3 class="font-display font-bold text-white text-lg mb-3">SAP Business Technology Platform (BTP)</h3>
             <p class="font-body text-slate-400 text-sm leading-relaxed">
-              SAP BTP entegrasyon akışlarını, veri pipeline’larını ve otomasyonu kurumsal iş akışlarıyla birlikte yönetin. Control-M, BTP job’larını tetikleyebilir, izleyebilir ve sonuçları diğer sistemlerle koordine edebilir.
+              SAP BTP entegrasyon akışlarını, veri pipeline’larını ve otomasyonu kurumsal iş akışlarıyla birlikte yönetin. Control-M, BTP işlerini tetikleyebilir, izleyebilir ve sonuçları diğer sistemlerle koordine edebilir.
             </p>
           </div>
           <div class="card-glass rounded-2xl p-7 relative overflow-hidden">
             <div class="absolute top-0 left-0 right-0 h-1" style="background:linear-gradient(90deg,#f59e0b,#f97316);"></div>
             <h3 class="font-display font-bold text-white text-lg mb-3">SAP ECC (Legacy On-Prem)</h3>
             <p class="font-body text-slate-400 text-sm leading-relaxed">
-              Mevcut ECC ortamları için tam destek — batch job’lar, ABAP programları, InfoPackage’lar ve process chain’ler dahil. Mevcut SAP job tanımlarını içe aktarın ve yeniden yazmaya gerek kalmadan modern iş akışlarıyla birlikte yönetin.
+              Mevcut ECC ortamları için tam destek — batch işler, ABAP programları, InfoPackage’lar ve process chain’ler dahil. Mevcut SAP iş tanımlarını içe aktarın ve yeniden yazmaya gerek kalmadan modern iş akışlarıyla birlikte yönetin.
             </p>
           </div>
           <div class="card-glass rounded-2xl p-7 relative overflow-hidden">
@@ -1944,7 +1944,7 @@
           </div>
           <div class="benefit-row" style="border-color:rgba(245,158,11,0.2);">
             <div class="check-icon" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.25);color:#fbbf24;">📆</div>
-            <div><h3 class="font-display font-bold text-white mb-1">Ay Sonu Finansal Kapanış</h3><p class="font-body text-slate-400 text-sm">SAP FI/CO, konsolidasyon sistemleri ve raporlama araçları arasında ay sonu kapanış job’larını koordine edin — doğru sırayı sağlayarak, hatalarda otomatik retry ve SLA takibi ile.</p></div>
+            <div><h3 class="font-display font-bold text-white mb-1">Ay Sonu Finansal Kapanış</h3><p class="font-body text-slate-400 text-sm">SAP FI/CO, konsolidasyon sistemleri ve raporlama araçları arasında ay sonu kapanış işlerini koordine edin — doğru sırayı sağlayarak, hatalarda otomatik retry ve SLA takibi ile.</p></div>
           </div>
           <div class="benefit-row" style="border-color:rgba(245,158,11,0.2);">
             <div class="check-icon" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.25);color:#fbbf24;">🚚</div>
@@ -1978,7 +1978,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td>Görünürlük kapsamı</td><td>Sadece SAP job’ları</td><td>Tek ekranda SAP + tüm SAP dışı sistemler</td></tr>
+              <tr><td>Görünürlük kapsamı</td><td>Sadece SAP işler</td><td>Tek ekranda SAP + tüm SAP dışı sistemler</td></tr>
               <tr><td>Sistemler arası bağımlılıklar</td><td>Desteklenmez</td><td>Tam kapsamlı cross-platform bağımlılık zincirleri</td></tr>
               <tr><td>SLA yönetimi</td><td>Manuel izleme</td><td>Proaktif uyarılarla otomatik SLA takibi</td></tr>
               <tr><td>Hatalı job restart</td><td>Manuel, baştan</td><td>Hatanın olduğu adımdan otomatik yeniden başlatma</td></tr>
@@ -1995,12 +1995,12 @@
         <div class="card-glass rounded-3xl p-10 md:p-12">
           <span class="section-badge mb-5 inline-block" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#fcd34d;">Geçiş</span>
           <h2 class="font-display font-bold text-white text-2xl mb-4">SAP Job Scheduler’dan Control-M’e Geçiş</h2>
-          <p class="font-body text-slate-400 leading-relaxed mb-6">Control-M, mevcut SAP batch job tanımlarını içe aktarıp otomatik olarak Control-M SMART Folder’larına dönüştüren araçlar içerir — manuel yeniden giriş gerekmez. Süreç:</p>
+          <p class="font-body text-slate-400 leading-relaxed mb-6">Control-M, mevcut SAP batch iş tanımlarını içe aktarıp otomatik olarak Control-M SMART Folder’larına dönüştüren araçlar içerir — manuel yeniden giriş gerekmez. Süreç:</p>
           <div class="space-y-4">
-            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(245,158,11,0.4);">1</div><div><p class="font-body text-slate-300 text-sm font-medium">Mevcut SAP job tanımlarını dışa aktar</p><p class="font-body text-slate-500 text-xs mt-0.5">Control-M’in SAP dönüşüm aracı ile SM37 veya BTP Job Scheduler’dan job schedule’larını çıkar.</p></div></div>
+            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(245,158,11,0.4);">1</div><div><p class="font-body text-slate-300 text-sm font-medium">Mevcut SAP iş tanımlarını dışa aktar</p><p class="font-body text-slate-500 text-xs mt-0.5">Control-M’in SAP dönüşüm aracı ile SM37 veya BTP Job Scheduler’dan schedule’ları çıkar.</p></div></div>
             <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(245,158,11,0.4);">2</div><div><p class="font-body text-slate-300 text-sm font-medium">Control-M SMART Folder’lara otomatik dönüştür</p><p class="font-body text-slate-500 text-xs mt-0.5">Dönüşüm aracı SAP zamanlama özelliklerini Control-M karşılıklarına eşler — takvimler, bağımlılıklar, parametreler ve post-processing işlemleri dahil.</p></div></div>
             <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(245,158,11,0.4);">3</div><div><p class="font-body text-slate-300 text-sm font-medium">İki sistemi paralel çalıştır</p><p class="font-body text-slate-500 text-xs mt-0.5">Cutover öncesinde Control-M schedule’larını mevcut SAP schedule’ları ile birlikte doğrula — migration sırasında production riski oluşmaz.</p></div></div>
-            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(245,158,11,0.4);">4</div><div><p class="font-body text-slate-300 text-sm font-medium">SAP scheduler’ı devre dışı bırak</p><p class="font-body text-slate-500 text-xs mt-0.5">Doğrulama tamamlandıktan sonra SAP’in yerel scheduler’ını kapat ve tüm SAP job’larını Control-M üzerinden yönet — kurumsal otomasyonla entegre şekilde.</p></div></div>
+            <div class="flex gap-4 items-start"><div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white" style="background:rgba(245,158,11,0.4);">4</div><div><p class="font-body text-slate-300 text-sm font-medium">SAP scheduler’ı devre dışı bırak</p><p class="font-body text-slate-500 text-xs mt-0.5">Doğrulama tamamlandıktan sonra SAP’in yerel scheduler’ını kapat ve tüm SAP işlerini Control-M üzerinden yönet — kurumsal otomasyonla entegre şekilde.</p></div></div>
           </div>
         </div>
       </div>
